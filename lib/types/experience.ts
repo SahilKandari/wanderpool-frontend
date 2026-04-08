@@ -36,7 +36,8 @@ export interface Experience {
   total_bookings: number;
   created_at: string;
   updated_at: string;
-  // Admin-only joined field
+  // Joined fields
+  cover_image_url?: string | null;
   agency_name?: string;
 }
 

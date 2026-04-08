@@ -8,6 +8,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import {
   Search, MapPin, Star, ArrowRight, ChevronDown,
   Waves, Mountain, Wind, Tent, Heart, Shield, Clock, TrendingUp,
+  Building2, UserCheck, Users,
 } from "lucide-react";
 import { experienceKeys, listPublicExperiences } from "@/lib/api/experiences";
 import { categoryKeys, listRootCategories } from "@/lib/api/categories";
@@ -15,7 +16,7 @@ import { paiseToCurrency } from "@/lib/utils/currency";
 import type { Experience } from "@/lib/types/experience";
 import type { Category } from "@/lib/types/experience";
 import { cn } from "@/lib/utils";
-console.log("Home page rendered");
+
 // ── Hero background images ────────────────────────────────────────────────────
 const HERO_SLIDES = [
   {
@@ -100,18 +101,31 @@ function ExperienceCard({ exp, index }: { exp: Experience; index: number }) {
           onMouseLeave={() => setHovered(false)}
         >
           {/* Image */}
-          <div className="aspect-[4/3] overflow-hidden">
-            <div
-              className={cn(
-                "w-full h-full bg-gradient-to-br transition-transform duration-700",
-                hovered ? "scale-110" : "scale-100",
-                CAT_COLORS["trekking"]
-              )}
-            >
-              <div className="w-full h-full flex items-center justify-center opacity-20">
-                <Mountain className="h-24 w-24 text-white" />
+          <div className="aspect-4/3 overflow-hidden relative">
+            {exp.cover_image_url ? (
+              <Image
+                src={exp.cover_image_url}
+                alt={exp.title}
+                fill
+                className={cn(
+                  "object-cover transition-transform duration-700",
+                  hovered ? "scale-110" : "scale-100"
+                )}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
+            ) : (
+              <div
+                className={cn(
+                  "w-full h-full bg-linear-to-br transition-transform duration-700",
+                  hovered ? "scale-110" : "scale-100",
+                  CAT_COLORS["trekking"]
+                )}
+              >
+                <div className="w-full h-full flex items-center justify-center opacity-20">
+                  <Mountain className="h-24 w-24 text-white" />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Featured badge */}
@@ -213,7 +227,6 @@ export default function HomePage() {
     queryFn: listRootCategories,
   });
 
-  const featured = experiences.filter(e => e.is_featured);
   const allExps = experiences.slice(0, 6);
 
   return (
@@ -505,6 +518,102 @@ export default function HomePage() {
               <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* ── FOR BUSINESSES ────────────────────────────────────────────────── */}
+      <section className="py-20 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <span className="text-primary text-sm font-semibold uppercase tracking-widest">For Businesses</span>
+            <h2 className="text-3xl sm:text-4xl font-black mt-2 text-foreground">
+              Grow Your Adventure Business
+            </h2>
+            <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
+              Whether you run a full agency, lead tours as an independent guide, or operate solo — WanderPool puts your experiences in front of thousands of travellers.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {[
+              {
+                icon: Building2,
+                color: "bg-indigo-50 text-indigo-600",
+                accent: "border-indigo-200",
+                title: "Travel Agency",
+                tag: "Multiple guides",
+                desc: "Manage your entire team from one dashboard. Create listings, assign bookings to guides, track payouts, and grow your brand.",
+                perks: ["Unlimited guide accounts", "Team booking assignment", "Monthly payout reports", "Agency profile page"],
+              },
+              {
+                icon: UserCheck,
+                color: "bg-emerald-50 text-emerald-600",
+                accent: "border-emerald-200",
+                title: "Guide / Operator",
+                tag: "Employed by agency",
+                desc: "Part of a team? Get your own login to view your assigned bookings, manage your schedule, and mark activities complete.",
+                perks: ["Personal booking view", "Activity start & complete", "Weekly schedule view", "Cash collection support"],
+              },
+              {
+                icon: Users,
+                color: "bg-amber-50 text-amber-600",
+                accent: "border-amber-200",
+                title: "Solo Operator",
+                tag: "Independent operator",
+                desc: "Running it alone? Get agency + guide access in one simpler account. List your experiences and manage everything yourself.",
+                perks: ["Combined agency + guide access", "Simple single dashboard", "Upgrade to agency anytime", "All data migrates seamlessly"],
+              },
+            ].map(({ icon: Icon, color, accent, title, tag, desc, perks }, i) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12 }}
+                className={cn(
+                  "bg-white rounded-2xl border-2 p-7 flex flex-col gap-5 hover:shadow-xl transition-all duration-300",
+                  accent
+                )}
+              >
+                <div>
+                  <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center mb-4", color)}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{tag}</span>
+                  <h3 className="text-xl font-black mt-1 text-foreground">{title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{desc}</p>
+                </div>
+                <ul className="space-y-1.5">
+                  {perks.map(perk => (
+                    <li key={perk} className="flex items-center gap-2 text-sm text-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      {perk}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-primary text-white font-bold text-sm hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
+            >
+              Business Login <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="text-xs text-muted-foreground mt-3">
+              New agency?{" "}
+              <Link href="/agency/register" className="text-primary hover:underline font-semibold">
+                Register your business
+              </Link>
+            </p>
+          </div>
         </div>
       </section>
 

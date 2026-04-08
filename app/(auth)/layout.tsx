@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
@@ -10,14 +12,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         <div className="relative">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
               <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
             </div>
             <span className="text-xl font-bold">WanderPool</span>
-          </div>
+          </Link>
         </div>
 
         <div className="relative space-y-6">
@@ -53,14 +55,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-1 flex-col items-center justify-center p-6 lg:p-12 bg-background">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-2 mb-8">
+          <Link href="/" className="flex lg:hidden items-center gap-2 mb-8 hover:opacity-80 transition-opacity">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
             </div>
             <span className="text-lg font-bold">WanderPool</span>
-          </div>
+          </Link>
           {children}
         </div>
       </div>

@@ -162,6 +162,15 @@ function UnifiedLoginContent() {
           </a>
         </p>
       )}
+
+      <div className="pt-4 border-t border-border text-center">
+        <p className="text-xs text-muted-foreground">
+          Looking to book an adventure?{" "}
+          <a href="/customer/login" className="text-foreground hover:text-primary underline">
+            Traveller login
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

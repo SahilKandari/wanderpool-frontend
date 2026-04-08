@@ -91,12 +91,12 @@ function CustomerLoginForm() {
             <label className="text-sm font-medium text-slate-700">
               Password
             </label>
-            <button
-              type="button"
+            <Link
+              href="/forgot-password"
               className="text-xs text-primary hover:underline"
             >
               Forgot password?
-            </button>
+            </Link>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
