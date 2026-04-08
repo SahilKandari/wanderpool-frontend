@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, Building2, Shield, UserCheck } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, Building2, Shield, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +51,8 @@ function UnifiedLoginContent() {
   const { refresh } = useAuth();
   const [selectedRole, setSelectedRole] = useState<Role>("agency");
   const [loading, setLoading] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -127,25 +129,31 @@ function UnifiedLoginContent() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <a href="/forgot-password" className="text-xs text-muted-foreground hover:text-primary">
+              Forgot password?
+            </a>
+          </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="current-password"
-              className="pl-9"
+              className="pl-9 pr-10"
               {...register("password")}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
-        </div>
-
-        <div className="flex items-center justify-end">
-          <a href="/forgot-password" className="text-xs text-muted-foreground hover:text-primary">
-            Forgot password?
-          </a>
         </div>
 
         <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={loading}>

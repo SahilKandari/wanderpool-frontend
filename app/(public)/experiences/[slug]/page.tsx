@@ -56,6 +56,14 @@ const PLACEHOLDER_IMAGES = [
   "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80",
 ];
 
+function buildGallery(exp: { cover_image_url?: string | null; images?: { url: string }[] }): string[] {
+  if (exp.images && exp.images.length > 0) {
+    return exp.images.map((img) => img.url);
+  }
+  if (exp.cover_image_url) return [exp.cover_image_url];
+  return PLACEHOLDER_IMAGES;
+}
+
 function durationLabel(minutes: number) {
   if (minutes < 60) return `${minutes} min`;
   if (minutes < 1440) {
@@ -98,7 +106,7 @@ export default function ExperienceDetailPage({
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !exp) return <NotFound />;
 
-  const images = PLACEHOLDER_IMAGES;
+  const images = buildGallery(exp);
   const price = Math.round(exp.base_price_paise / 100);
   const totalPrice = price * participants;
   const policy = POLICY_MAP[exp.cancellation_policy] ?? POLICY_MAP.free_48h;

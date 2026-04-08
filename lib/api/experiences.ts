@@ -15,6 +15,7 @@ export async function listPublicExperiences(params?: {
   category_id?: string;
   min_price?: number;
   max_price?: number;
+  duration?: string;
   limit?: number;
   offset?: number;
 }): Promise<Experience[]> {
@@ -23,6 +24,7 @@ export async function listPublicExperiences(params?: {
   if (params?.category_id) qs.set("category_id", params.category_id);
   if (params?.min_price != null) qs.set("min_price", String(params.min_price));
   if (params?.max_price != null) qs.set("max_price", String(params.max_price));
+  if (params?.duration) qs.set("duration", params.duration);
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.offset) qs.set("offset", String(params.offset));
   const query = qs.toString() ? `?${qs}` : "";

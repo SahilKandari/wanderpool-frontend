@@ -62,29 +62,22 @@ function durationLabel(minutes: number) {
   return `${d} day${d > 1 ? "s" : ""}`;
 }
 
-function matchesDuration(minutes: number, filter: string) {
-  if (!filter) return true;
-  if (filter === "short") return minutes < 120;
-  if (filter === "half") return minutes >= 120 && minutes < 480;
-  if (filter === "full") return minutes >= 480 && minutes < 1440;
-  if (filter === "multi") return minutes >= 1440;
-  return true;
-}
+
+const PLACEHOLDERS = [
+  "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&q=80",
+  "https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=600&q=80",
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80",
+  "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80",
+  "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=600&q=80",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
+];
 
 function ExperienceCard({ exp, index }: { exp: Experience; index: number }) {
   const pathname = usePathname();
   const { isFavourited, toggle, isLoading: favLoading } = useFavourite(exp.id);
   const price = Math.round(exp.base_price_paise / 100);
 
-  const placeholders = [
-    "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&q=80",
-    "https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=600&q=80",
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80",
-    "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80",
-    "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=600&q=80",
-    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
-  ];
-  const img = placeholders[index % placeholders.length];
+  const img = exp.cover_image_url ?? PLACEHOLDERS[index % PLACEHOLDERS.length];
 
   return (
     <motion.div
@@ -203,6 +196,7 @@ export default function ExperiencesPage() {
   const [city, setCity] = useState(searchParams.get("city") ?? "");
   const [duration, setDuration] = useState("");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") ?? "");
+  const [categoryId, setCategoryId] = useState(searchParams.get("category_id") ?? "");
   const [showFilters, setShowFilters] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
@@ -225,26 +219,29 @@ export default function ExperiencesPage() {
 
   const queryParams = {
     city: city || undefined,
+    category_id: categoryId || undefined,
     max_price: maxPrice ? Number(maxPrice) * 100 : undefined,
+    duration: duration || undefined,
     limit: 24,
   };
 
   const { data: experiences = [], isLoading } = useQuery({
-    queryKey: experienceKeys.list({ city, max_price: maxPrice }),
+    queryKey: experienceKeys.list({ city, max_price: maxPrice, category_id: categoryId, duration }),
     queryFn: () => listPublicExperiences(queryParams),
   });
 
-  // Client-side filter by search + duration
+  // Client-side filter: search text only (all other filters are server-side)
   const filtered = experiences.filter((exp) => {
-    const matchSearch =
-      !search ||
-      exp.title.toLowerCase().includes(search.toLowerCase()) ||
-      exp.location_city.toLowerCase().includes(search.toLowerCase()) ||
-      exp.description.toLowerCase().includes(search.toLowerCase());
-    return matchSearch && matchesDuration(exp.duration_minutes, duration);
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      exp.title.toLowerCase().includes(q) ||
+      exp.location_city.toLowerCase().includes(q) ||
+      exp.description.toLowerCase().includes(q)
+    );
   });
 
-  const activeFilterCount = [city, duration, maxPrice].filter(Boolean).length;
+  const activeFilterCount = [city, duration, maxPrice, categoryId].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-slate-50 pt-16">
@@ -399,6 +396,7 @@ export default function ExperiencesPage() {
                           setCity("");
                           setDuration("");
                           setMaxPrice("");
+                          setCategoryId("");
                         }}
                         className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
                       >
@@ -419,14 +417,28 @@ export default function ExperiencesPage() {
         <div className="bg-white border-b border-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-white text-xs font-medium whitespace-nowrap shrink-0">
+              <button
+                onClick={() => setCategoryId("")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors",
+                  !categoryId
+                    ? "bg-primary text-white"
+                    : "border border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
+                )}
+              >
                 <Filter className="h-3 w-3" />
                 All
               </button>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 text-xs font-medium whitespace-nowrap shrink-0 hover:border-primary hover:text-primary transition-colors"
+                  onClick={() => setCategoryId(categoryId === cat.id ? "" : cat.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap shrink-0 transition-colors",
+                    categoryId === cat.id
+                      ? "border-primary bg-primary text-white"
+                      : "border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
+                  )}
                 >
                   {CATEGORY_ICONS[cat.slug] ?? CATEGORY_ICONS.default}
                   {cat.name}
@@ -477,6 +489,7 @@ export default function ExperiencesPage() {
                 setCity("");
                 setDuration("");
                 setMaxPrice("");
+                setCategoryId("");
               }}
               className="mt-6 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
             >

@@ -38,6 +38,7 @@ export interface Experience {
   updated_at: string;
   // Joined fields
   cover_image_url?: string | null;
+  images?: ExperienceImage[];
   agency_name?: string;
 }
 
