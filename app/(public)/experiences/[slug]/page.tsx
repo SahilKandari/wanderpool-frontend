@@ -440,7 +440,16 @@ export default function ExperienceDetailPage({
               {!reviewsData || reviewsData.reviews.length === 0 ? (
                 <div className="text-center py-10 text-slate-400">
                   <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No reviews yet. Be the first!</p>
+                  <p className="text-sm mb-3">No reviews yet. Be the first!</p>
+                  {eligibility?.can_review && eligibility.booking_id && (
+                    <a
+                      href={`/bookings/${eligibility.booking_id}/review`}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/5 px-4 py-2 rounded-lg hover:bg-primary/10 transition-colors"
+                    >
+                      <Star className="h-3.5 w-3.5" />
+                      Write the first review
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">

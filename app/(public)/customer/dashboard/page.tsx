@@ -66,7 +66,7 @@ const PLACEHOLDER_IMAGES = [
 function BookingCard({ booking, index }: { booking: Booking; index: number }) {
   const status = STATUS_CONFIG[booking.status];
   const price = Math.round(booking.total_paise / 100);
-  const img = PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
+  const img = booking.cover_image_url ?? PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
   const isUpcoming =
     booking.status === "confirmed" &&
     new Date(booking.slot_date) >= new Date();

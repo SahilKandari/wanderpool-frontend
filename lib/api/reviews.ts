@@ -1,4 +1,4 @@
-import { apiFetch, publicFetch } from "./fetch";
+import { apiFetch, publicFetch } from "./client";
 import type { Review, ReviewsResponse, EligibilityResponse } from "@/lib/types/review";
 
 export const reviewKeys = {
@@ -18,18 +18,18 @@ export async function getExperienceReviews(
   limit = 10
 ): Promise<ReviewsResponse> {
   return publicFetch(
-    `/api/v1/experiences/${experienceId}/reviews?page=${page}&limit=${limit}`
+    `/experiences/${experienceId}/reviews?page=${page}&limit=${limit}`
   );
 }
 
 export async function getMyReviews(): Promise<Review[]> {
-  return apiFetch("/api/v1/customer/reviews");
+  return apiFetch("/customer/reviews");
 }
 
 export async function checkReviewEligibility(
   experienceId: string
 ): Promise<EligibilityResponse> {
-  return apiFetch(`/api/v1/customer/reviews/eligible?experience_id=${experienceId}`);
+  return apiFetch(`/customer/reviews/eligible?experience_id=${experienceId}`);
 }
 
 export async function createReview(payload: {
@@ -37,7 +37,7 @@ export async function createReview(payload: {
   rating: number;
   body: string;
 }): Promise<Review> {
-  return apiFetch("/api/v1/customer/reviews", {
+  return apiFetch("/customer/reviews", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -53,14 +53,14 @@ export async function getAgencyReviews(params?: {
   if (params?.rating) q.set("rating", params.rating);
   if (params?.page) q.set("page", String(params.page));
   const qs = q.toString();
-  return apiFetch(`/api/v1/agency/reviews${qs ? `?${qs}` : ""}`);
+  return apiFetch(`/agency/reviews${qs ? `?${qs}` : ""}`);
 }
 
 export async function replyToReview(
   reviewId: string,
   reply: string
 ): Promise<{ id: string; operator_reply: string; replied_at: string }> {
-  return apiFetch(`/api/v1/agency/reviews/${reviewId}/reply`, {
+  return apiFetch(`/agency/reviews/${reviewId}/reply`, {
     method: "PATCH",
     body: JSON.stringify({ reply }),
   });
@@ -70,7 +70,7 @@ export async function adminToggleReviewVisibility(
   reviewId: string,
   isVisible: boolean
 ): Promise<{ is_visible: boolean }> {
-  return apiFetch(`/api/v1/admin/reviews/${reviewId}/visibility`, {
+  return apiFetch(`/admin/reviews/${reviewId}/visibility`, {
     method: "PATCH",
     body: JSON.stringify({ is_visible: isVisible }),
   });

@@ -38,7 +38,8 @@ export interface Booking {
   activity_completed_at: string | null;
   created_at: string;
   updated_at: string;
-  // enriched fields (may be present in confirmation response)
+  // enriched fields
+  cover_image_url?: string | null;
   location_name?: string;
   location_city?: string;
 }
