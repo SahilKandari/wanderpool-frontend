@@ -13,6 +13,7 @@ import {
   BookMarked,
   Clock,
   CheckSquare,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { label: "Bookings",         href: "/agency/bookings",     icon: BookOpen,        roles: ["agency"] },
   { label: "Schedule",         href: "/agency/schedule",     icon: CalendarDays,    roles: ["agency"] },
   { label: "Guides",           href: "/agency/guides",       icon: Users,           roles: ["agency"] },
+  { label: "Reviews",          href: "/agency/reviews",      icon: Star,            roles: ["agency"] },
   { label: "Earnings",         href: "/agency/payouts",      icon: CreditCard,      roles: ["agency"] },
   { label: "Settings",         href: "/agency/settings",     icon: Settings,        roles: ["agency"] },
   { label: "Dashboard",        href: "/operator/dashboard",  icon: LayoutDashboard, roles: ["operator"] },

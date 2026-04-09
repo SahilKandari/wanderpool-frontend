@@ -24,9 +24,16 @@ import {
   AlertTriangle,
   Phone,
   Loader2,
+  MessageSquare,
+  ThumbsUp,
 } from "lucide-react";
 import { getExperienceBySlug, experienceKeys } from "@/lib/api/experiences";
 import { listExperienceSlots, bookingKeys } from "@/lib/api/bookings";
+import {
+  getExperienceReviews,
+  checkReviewEligibility,
+  reviewKeys,
+} from "@/lib/api/reviews";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useFavourite } from "@/lib/hooks/useFavourite";
 import { cn } from "@/lib/utils";
@@ -85,6 +92,7 @@ export default function ExperienceDetailPage({
   const [participants, setParticipants] = useState(2);
   const [bookingDate, setBookingDate] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState("");
+  const [reviewPage, setReviewPage] = useState(1);
 
 
   const { data: exp, isLoading, isError } = useQuery({
@@ -95,6 +103,20 @@ export default function ExperienceDetailPage({
   // Hook needs exp.id — safe to call unconditionally (disabled when id is empty)
   const { isFavourited, toggle: toggleFavourite, isLoading: favLoading } =
     useFavourite(exp?.id ?? "");
+
+  // Fetch reviews
+  const { data: reviewsData } = useQuery({
+    queryKey: reviewKeys.forExperience(exp?.id ?? "", reviewPage),
+    queryFn: () => getExperienceReviews(exp!.id, reviewPage),
+    enabled: !!exp?.id,
+  });
+
+  // Check if the logged-in customer can write a review for this experience
+  const { data: eligibility } = useQuery({
+    queryKey: reviewKeys.eligible(exp?.id ?? ""),
+    queryFn: () => checkReviewEligibility(exp!.id),
+    enabled: !!exp?.id && !!user && user.actorKind === "customer",
+  });
 
   // Fetch slots for the selected date only (re-fetches when date changes)
   const { data: daySlots = [], isLoading: slotsLoading } = useQuery({
@@ -335,6 +357,182 @@ export default function ExperienceDetailPage({
                 <p className="text-sm font-semibold text-slate-900">Need help?</p>
                 <p className="text-sm text-slate-500">WhatsApp us 7am–8pm · Response within 15 min</p>
               </div>
+            </div>
+
+            {/* ── Reviews ─────────────────────────────────────────────────── */}
+            <div id="reviews">
+              {/* Section header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900">Reviews</h2>
+                  {exp.review_count > 0 && (
+                    <span className="flex items-center gap-1 text-sm text-slate-600">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                      <strong>{exp.avg_rating.toFixed(1)}</strong>
+                      <span className="text-slate-400">({exp.review_count})</span>
+                    </span>
+                  )}
+                </div>
+                {eligibility?.can_review && eligibility.booking_id && (
+                  <a
+                    href={`/bookings/${eligibility.booking_id}/review`}
+                    className="flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/5 px-3 py-1.5 rounded-lg hover:bg-primary/10 transition-colors"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                    Write a Review
+                  </a>
+                )}
+              </div>
+
+              {/* Rating distribution */}
+              {reviewsData && reviewsData.total > 0 && (
+                <div className="bg-slate-50 rounded-2xl p-4 mb-5 flex gap-6 items-center">
+                  <div className="text-center shrink-0">
+                    <p className="text-4xl font-bold text-slate-900 leading-none">
+                      {exp.avg_rating.toFixed(1)}
+                    </p>
+                    <div className="flex justify-center gap-0.5 mt-1.5">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star
+                          key={n}
+                          className={cn(
+                            "h-3.5 w-3.5",
+                            n <= Math.round(exp.avg_rating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "fill-slate-200 text-slate-200"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {exp.review_count} review{exp.review_count !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const dist = reviewsData.distribution.find(
+                        (d) => d.rating === star
+                      );
+                      const count = dist?.count ?? 0;
+                      const pct =
+                        exp.review_count > 0
+                          ? Math.round((count / exp.review_count) * 100)
+                          : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-2 text-xs">
+                          <span className="w-3 text-right text-slate-500">{star}</span>
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-amber-400 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="w-6 text-slate-400">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Review list */}
+              {!reviewsData || reviewsData.reviews.length === 0 ? (
+                <div className="text-center py-10 text-slate-400">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No reviews yet. Be the first!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviewsData.reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm"
+                    >
+                      {/* Reviewer + rating */}
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-primary">
+                              {review.customer_name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {review.customer_name}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(review.created_at).toLocaleDateString(
+                                "en-IN",
+                                { day: "numeric", month: "short", year: "numeric" }
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <Star
+                              key={n}
+                              className={cn(
+                                "h-3.5 w-3.5",
+                                n <= review.rating
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "fill-slate-200 text-slate-200"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Body */}
+                      {review.body && (
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {review.body}
+                        </p>
+                      )}
+
+                      {/* Operator reply */}
+                      {review.operator_reply && (
+                        <div className="mt-3 pl-3 border-l-2 border-primary/30">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+                            <span className="text-xs font-semibold text-primary">
+                              Response from the host
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600">
+                            {review.operator_reply}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Pagination */}
+                  {reviewsData.total > 10 && (
+                    <div className="flex items-center justify-center gap-3 pt-2">
+                      <button
+                        disabled={reviewPage === 1}
+                        onClick={() => setReviewPage((p) => p - 1)}
+                        className="text-sm text-slate-600 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        ← Previous
+                      </button>
+                      <span className="text-xs text-slate-400">
+                        Page {reviewPage} of{" "}
+                        {Math.ceil(reviewsData.total / 10)}
+                      </span>
+                      <button
+                        disabled={reviewPage >= Math.ceil(reviewsData.total / 10)}
+                        onClick={() => setReviewPage((p) => p + 1)}
+                        className="text-sm text-slate-600 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

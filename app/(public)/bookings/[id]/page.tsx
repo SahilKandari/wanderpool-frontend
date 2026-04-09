@@ -22,6 +22,7 @@ import {
   Share2,
   Shield,
   AlertTriangle,
+  Star,
 } from "lucide-react";
 import {
   Dialog,
@@ -336,9 +337,10 @@ export default function BookingDetailPage({
           <div className="flex gap-3">
             {booking.status === "completed" && (
               <Link
-                href={`/experiences/${booking.experience_slug}`}
+                href={`/bookings/${booking.id}/review`}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
               >
+                <Star className="h-4 w-4" />
                 Write a Review
               </Link>
             )}

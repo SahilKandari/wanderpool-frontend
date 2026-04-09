@@ -140,7 +140,7 @@ function BookingCard({ booking, index }: { booking: Booking; index: number }) {
             </div>
             {booking.status === "completed" && (
               <Link
-                href={`/experiences/${booking.experience_slug}`}
+                href={`/bookings/${booking.id}/review`}
                 className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
               >
                 <Star className="h-3 w-3" />
