@@ -140,7 +140,13 @@ export function DynamicMetadataForm({
     );
   }
 
-  if (fields.length === 0) return null;
+  if (fields.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground italic py-4">
+        No activity-specific fields defined for this category yet.
+      </p>
+    );
+  }
 
   // Group by group_name
   const groups = fields.reduce<Record<string, CategoryField[]>>((acc, f) => {

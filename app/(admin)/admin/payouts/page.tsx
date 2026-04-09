@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   CheckCircle2, Clock, TrendingUp, XCircle,
-  IndianRupee, CalendarDays, Search,
+  IndianRupee, CalendarDays, Search, CreditCard, X, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,29 @@ import { formatDate } from "@/lib/utils/date";
 import type { Payout } from "@/lib/types/booking";
 import { cn } from "@/lib/utils";
 
+function getPresetRange(preset: string): { from: string; to: string } | null {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const day = now.getDay();
+  const diffToMon = day === 0 ? 6 : day - 1;
+  const thisMonday = new Date(now); thisMonday.setDate(now.getDate() - diffToMon); thisMonday.setHours(0,0,0,0);
+  const thisSunday = new Date(thisMonday); thisSunday.setDate(thisMonday.getDate() + 6);
+  if (preset === "this_week") {
+    return { from: fmt(thisMonday), to: fmt(thisSunday) };
+  }
+  if (preset === "last_week") {
+    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() - 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return { from: fmt(mon), to: fmt(sun) };
+  }
+  if (preset === "last_4_weeks") {
+    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() - 21);
+    return { from: fmt(mon), to: fmt(thisSunday) };
+  }
+  return null;
+}
+
 function statusStyle(status: Payout["status"]) {
   switch (status) {
     case "paid":       return "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -51,19 +74,30 @@ export default function AdminPayoutsPage() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [preset, setPreset] = useState("all_time");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [payTarget, setPayTarget] = useState<Payout | null>(null);
   const [refId, setRefId] = useState("");
 
+  const activeRange = preset === "custom"
+    ? (customFrom && customTo ? { from: customFrom, to: customTo } : null)
+    : preset !== "all_time" ? getPresetRange(preset) : null;
+
   const { data: payouts = [], isLoading } = useQuery({
-    queryKey: payoutKeys.adminList(),
-    queryFn: adminListPayouts,
+    queryKey: payoutKeys.adminList(activeRange?.from, activeRange?.to),
+    queryFn: () => adminListPayouts(activeRange?.from, activeRange?.to),
   });
 
   const markPaidMutation = useMutation({
-    mutationFn: ({ id, ref }: { id: string; ref: string }) =>
-      adminMarkPayoutPaid(id, ref),
-    onSuccess: () => {
-      toast.success("Payout marked as paid");
+    mutationFn: (p: Payout) => adminMarkPayoutPaid({
+      agency_id: p.agency_id,
+      period_start: p.period_start.slice(0, 10),
+      period_end: p.period_end.slice(0, 10),
+      reference_id: refId.trim(),
+    }),
+    onSuccess: (data) => {
+      toast.success(`Payout marked as paid — ${data.bookings_updated} booking(s) updated`);
       qc.invalidateQueries({ queryKey: payoutKeys.all });
       setPayTarget(null);
       setRefId("");
@@ -73,8 +107,10 @@ export default function AdminPayoutsPage() {
 
   const filtered = payouts.filter(p => {
     if (statusFilter !== "all" && p.status !== statusFilter) return false;
-    if (search && !p.agency_id.toLowerCase().includes(search.toLowerCase()) &&
-        !(p.reference_id ?? "").toLowerCase().includes(search.toLowerCase())) return false;
+    const q = search.toLowerCase();
+    if (q && !p.agency_name.toLowerCase().includes(q) &&
+        !p.agency_id.toLowerCase().includes(q) &&
+        !(p.reference_id ?? "").toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -89,7 +125,7 @@ export default function AdminPayoutsPage() {
       <PageHeader title="Payouts" description="Manage operator payout disbursements" />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: "Pending Amount", value: paiseToCurrency(totalPending), color: "text-amber-600", icon: Clock },
           { label: "Paid Out (All Time)", value: paiseToCurrency(totalPaid), color: "text-emerald-600", icon: CheckCircle2 },
@@ -105,7 +141,6 @@ export default function AdminPayoutsPage() {
         ))}
       </div>
 
-      {/* Pending banner */}
       {pendingCount > 0 && (
         <div className="mb-5 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
           <Clock className="h-4 w-4 shrink-0" />
@@ -114,23 +149,66 @@ export default function AdminPayoutsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap items-end gap-3 mb-5">
+        <div className="relative flex-1 min-w-48 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by agency or reference…" className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Search agency or reference…" className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
-          </SelectContent>
-        </Select>
+
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Period</Label>
+          <Select value={preset} onValueChange={(v) => {
+            setPreset(v);
+            if (v !== "custom") { setCustomFrom(""); setCustomTo(""); }
+          }}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_time">All Time</SelectItem>
+              <SelectItem value="this_week">This Week</SelectItem>
+              <SelectItem value="last_week">Last Week</SelectItem>
+              <SelectItem value="last_4_weeks">Last 4 Weeks</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {preset === "custom" && (
+          <>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">From</Label>
+              <Input type="date" className="w-40" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">To</Label>
+              <Input type="date" className="w-40" value={customTo} onChange={e => setCustomTo(e.target.value)} />
+            </div>
+          </>
+        )}
+
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Status</Label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {(preset !== "all_time" || statusFilter !== "all" || search) && (
+          <Button variant="ghost" size="sm" className="self-end text-muted-foreground"
+            onClick={() => { setPreset("all_time"); setStatusFilter("all"); setSearch(""); setCustomFrom(""); setCustomTo(""); }}>
+            <X className="h-3.5 w-3.5 mr-1" /> Clear
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -146,9 +224,10 @@ export default function AdminPayoutsPage() {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>Agency</TableHead>
-                <TableHead>Period</TableHead>
+                <TableHead>Week (Activity Date)</TableHead>
                 <TableHead className="text-center">Bookings</TableHead>
                 <TableHead>Amount</TableHead>
+                <TableHead>Breakdown</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Paid Date</TableHead>
@@ -158,8 +237,14 @@ export default function AdminPayoutsPage() {
             <TableBody>
               {filtered.map(payout => (
                 <TableRow key={payout.id}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {payout.agency_id.slice(0, 8)}…
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">{payout.agency_name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{payout.agency_id.slice(0, 8)}…</p>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="text-sm">
                     <div className="flex items-center gap-1.5">
@@ -169,6 +254,14 @@ export default function AdminPayoutsPage() {
                   </TableCell>
                   <TableCell className="text-center text-sm">{payout.booking_count}</TableCell>
                   <TableCell className="font-semibold text-sm">{paiseToCurrency(payout.amount_paise)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {payout.partial_payment_paise > 0 ? (
+                      <div className="space-y-0.5">
+                        <p>Full: {paiseToCurrency(payout.full_payment_paise)}</p>
+                        <p className="text-blue-600">Partial: {paiseToCurrency(payout.partial_payment_paise)}</p>
+                      </div>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell>
                     <span className={cn(
                       "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border capitalize",
@@ -185,12 +278,12 @@ export default function AdminPayoutsPage() {
                     {payout.paid_at ? formatDate(payout.paid_at) : "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    {payout.status === "pending" && (
+                    {(payout.status === "pending" || payout.status === "processing") && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => setPayTarget(payout)}
+                        onClick={() => { setPayTarget(payout); setRefId(""); }}
                       >
                         Mark Paid
                       </Button>
@@ -209,7 +302,10 @@ export default function AdminPayoutsPage() {
           <DialogHeader>
             <DialogTitle>Mark Payout as Paid</DialogTitle>
             <DialogDescription>
-              Confirm you have transferred {payTarget ? paiseToCurrency(payTarget.amount_paise) : ""} to the operator&apos;s bank account.
+              Confirm you have transferred{" "}
+              <strong>{payTarget ? paiseToCurrency(payTarget.amount_paise) : ""}</strong>{" "}
+              to <strong>{payTarget?.agency_name}</strong> for the period{" "}
+              {payTarget ? `${formatDate(payTarget.period_start)} – ${formatDate(payTarget.period_end)}` : ""}.
             </DialogDescription>
           </DialogHeader>
           <div className="py-2 space-y-1.5">
@@ -219,12 +315,15 @@ export default function AdminPayoutsPage() {
               value={refId}
               onChange={e => setRefId(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              This reference is stored against all {payTarget?.booking_count} booking(s) in this period.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPayTarget(null)}>Cancel</Button>
             <Button
               disabled={!refId.trim() || markPaidMutation.isPending}
-              onClick={() => payTarget && markPaidMutation.mutate({ id: payTarget.id, ref: refId })}
+              onClick={() => payTarget && markPaidMutation.mutate(payTarget)}
             >
               {markPaidMutation.isPending ? "Saving…" : "Confirm Payment"}
             </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -188,7 +188,7 @@ function SkeletonCard() {
   );
 }
 
-export default function ExperiencesPage() {
+function ExperiencesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -200,6 +200,19 @@ export default function ExperiencesPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
+
+  // Sync filter state → URL so the URL is shareable / bookmarkable
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (city) params.set("city", city);
+    if (categoryId) params.set("category_id", categoryId);
+    if (duration) params.set("duration", duration);
+    if (maxPrice) params.set("max_price", maxPrice);
+    const qs = params.toString();
+    router.replace(qs ? `/experiences?${qs}` : "/experiences", { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, city, categoryId, duration, maxPrice]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -505,5 +518,13 @@ export default function ExperiencesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ExperiencesPage() {
+  return (
+    <Suspense>
+      <ExperiencesContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useRef } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -18,8 +18,11 @@ import {
   Share2,
   ArrowRight,
   Shield,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { getBooking, bookingKeys } from "@/lib/api/bookings";
+import { downloadReceiptPDF, shareReceiptPDF } from "@/lib/utils/receipt";
 
 function fmt(paise: number) {
   return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
@@ -28,7 +31,8 @@ function fmt(paise: number) {
 function ReceiptContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("id") ?? "";
-  const receiptRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const { data: booking, isLoading } = useQuery({
     queryKey: bookingKeys.detail(bookingId),
@@ -36,45 +40,28 @@ function ReceiptContent() {
     enabled: !!bookingId,
   });
 
-  function handleDownload() {
-    if (!receiptRef.current) return;
-    // Use browser print to PDF as download
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>WanderPool Booking Receipt</title>
-          <style>
-            body { font-family: system-ui, sans-serif; padding: 40px; color: #1e293b; }
-            .header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
-            .logo { background: #16a34a; color: white; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
-            h1 { font-size: 28px; font-weight: 800; margin: 0 0 4px; }
-            .subtitle { color: #64748b; font-size: 14px; }
-            .badge { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 24px; }
-            .section { margin-bottom: 24px; }
-            .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }
-            .value { font-size: 15px; font-weight: 500; color: #1e293b; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-            .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
-            .total { font-size: 18px; font-weight: 700; }
-            .footer { margin-top: 40px; font-size: 12px; color: #94a3b8; text-align: center; }
-            @media print { body { padding: 20px; } }
-          </style>
-        </head>
-        <body>
-          ${receiptRef.current.innerHTML}
-          <div class="footer">WanderPool · India&apos;s adventure marketplace · wanderpool.in</div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
+  async function handleDownload() {
+    if (!booking) return;
+    setDownloading(true);
+    try {
+      await downloadReceiptPDF(booking);
+    } catch {
+      toast.error("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  async function handleShare() {
+    if (!booking) return;
+    setSharing(true);
+    try {
+      await shareReceiptPDF(booking);
+    } catch {
+      toast.error("Unable to share. Try downloading instead.");
+    } finally {
+      setSharing(false);
+    }
   }
 
   if (isLoading || !booking) {
@@ -121,8 +108,8 @@ function ReceiptContent() {
           transition={{ delay: 0.15 }}
           className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden"
         >
-          {/* Receipt printable area */}
-          <div ref={receiptRef} className="p-6 sm:p-8">
+          {/* Receipt area */}
+          <div className="p-6 sm:p-8">
             {/* Booking ref header */}
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -132,7 +119,7 @@ function ReceiptContent() {
                   </div>
                   <span className="font-bold text-slate-900">WanderPool</span>
                 </div>
-                <p className="text-xs text-slate-400">Booking Receipt</p>
+                <p className="text-xs text-slate-400">Booking Confirmation</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-400 mb-0.5">Booking ID</p>
@@ -249,7 +236,7 @@ function ReceiptContent() {
               {[
                 { icon: Shield, text: "Guide will WhatsApp you within 30 minutes" },
                 { icon: Phone, text: "48-hour reminder with meeting point & what to bring" },
-                { icon: CheckCircle2, text: "Show this booking ID at the venue" },
+                { icon: CheckCircle2, text: `Show booking ID ${booking.booking_code} at the venue` },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-start gap-2.5 text-sm text-slate-600">
                   <Icon className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
@@ -269,31 +256,25 @@ function ReceiptContent() {
         >
           <button
             onClick={handleDownload}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            disabled={downloading}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-60"
           >
-            <Download className="h-4 w-4" />
-            Download receipt
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {downloading ? "Generating PDF…" : "Download Confirmation"}
           </button>
           <button
-            onClick={() => {
-              const url = window.location.href;
-              if (navigator.share) {
-                navigator.share({ title: "My WanderPool Booking", url });
-              } else {
-                navigator.clipboard.writeText(url);
-                // toast handled externally
-              }
-            }}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            onClick={handleShare}
+            disabled={sharing}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-60"
           >
-            <Share2 className="h-4 w-4" />
-            Share
+            {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+            {sharing ? "Preparing…" : "Share Confirmation"}
           </button>
           <Link
             href="/customer/dashboard"
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
           >
-            My bookings
+            My Bookings
             <ArrowRight className="h-4 w-4" />
           </Link>
         </motion.div>

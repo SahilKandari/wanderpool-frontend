@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, Mountain, Search, User } from "lucide-react";
+import { Menu, X, Mountain, Search, User, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
 
@@ -85,6 +85,18 @@ function Navbar() {
             {user && user.actorKind === "customer" ? (
               <div className="flex items-center gap-2">
                 <Link
+                  href="/customer/favourites"
+                  className={cn(
+                    "p-2 rounded-lg transition-colors",
+                    scrolled || !isHome
+                      ? "text-muted-foreground hover:text-rose-500 hover:bg-rose-50"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  )}
+                  title="My Favourites"
+                >
+                  <Heart className="h-4 w-4" />
+                </Link>
+                <Link
                   href="/customer/dashboard"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors"
                 >
@@ -139,13 +151,40 @@ function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/customer/login"
-            onClick={() => setMenuOpen(false)}
-            className="block mt-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-center bg-primary text-white"
-          >
-            Sign In
-          </Link>
+          {user && user.actorKind === "customer" ? (
+            <>
+              <Link
+                href="/customer/favourites"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-slate-50"
+              >
+                <Heart className="h-4 w-4 text-rose-500" />
+                My Favourites
+              </Link>
+              <Link
+                href="/customer/dashboard"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-slate-50"
+              >
+                <User className="h-4 w-4" />
+                My Bookings
+              </Link>
+              <button
+                onClick={() => { logout(); setMenuOpen(false); }}
+                className="block w-full mt-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-center border border-slate-200 text-slate-600"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/customer/login"
+              onClick={() => setMenuOpen(false)}
+              className="block mt-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-center bg-primary text-white"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       )}
     </header>

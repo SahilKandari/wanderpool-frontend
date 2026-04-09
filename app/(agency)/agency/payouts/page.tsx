@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   CreditCard, Clock, CheckCircle2, XCircle, TrendingUp,
-  IndianRupee, CalendarDays,
+  IndianRupee, CalendarDays, X,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -23,6 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { payoutKeys, listMyPayouts } from "@/lib/api/payouts";
@@ -31,30 +33,61 @@ import { formatDate } from "@/lib/utils/date";
 import type { Payout } from "@/lib/types/booking";
 import { cn } from "@/lib/utils";
 
+function getPresetRange(preset: string): { from: string; to: string } | null {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  // Monday of current week
+  const day = now.getDay();
+  const diffToMon = day === 0 ? 6 : day - 1;
+  const thisMonday = new Date(now); thisMonday.setDate(now.getDate() - diffToMon); thisMonday.setHours(0,0,0,0);
+  const thisSunday = new Date(thisMonday); thisSunday.setDate(thisMonday.getDate() + 6);
+  if (preset === "this_week") {
+    return { from: fmt(thisMonday), to: fmt(thisSunday) };
+  }
+  if (preset === "last_week") {
+    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() - 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return { from: fmt(mon), to: fmt(sun) };
+  }
+  if (preset === "last_4_weeks") {
+    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() - 21);
+    return { from: fmt(mon), to: fmt(thisSunday) };
+  }
+  return null;
+}
+
 function statusStyle(status: Payout["status"]) {
   switch (status) {
-    case "paid": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "pending": return "bg-amber-50 text-amber-700 border-amber-200";
+    case "paid":       return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "pending":    return "bg-amber-50 text-amber-700 border-amber-200";
     case "processing": return "bg-blue-50 text-blue-700 border-blue-200";
-    case "failed": return "bg-red-50 text-red-700 border-red-200";
+    case "failed":     return "bg-red-50 text-red-700 border-red-200";
   }
 }
 
 function statusIcon(status: Payout["status"]) {
   switch (status) {
-    case "paid": return <CheckCircle2 className="h-3.5 w-3.5" />;
-    case "pending": return <Clock className="h-3.5 w-3.5" />;
+    case "paid":       return <CheckCircle2 className="h-3.5 w-3.5" />;
+    case "pending":    return <Clock className="h-3.5 w-3.5" />;
     case "processing": return <TrendingUp className="h-3.5 w-3.5" />;
-    case "failed": return <XCircle className="h-3.5 w-3.5" />;
+    case "failed":     return <XCircle className="h-3.5 w-3.5" />;
   }
 }
 
 export default function AgencyPayoutsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [preset, setPreset] = useState("all_time");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+
+  const activeRange = preset === "custom"
+    ? (customFrom && customTo ? { from: customFrom, to: customTo } : null)
+    : preset !== "all_time" ? getPresetRange(preset) : null;
 
   const { data: payouts = [], isLoading } = useQuery({
-    queryKey: payoutKeys.list(),
-    queryFn: listMyPayouts,
+    queryKey: payoutKeys.list(activeRange?.from, activeRange?.to),
+    queryFn: () => listMyPayouts(activeRange?.from, activeRange?.to),
   });
 
   const filtered = statusFilter === "all"
@@ -76,8 +109,8 @@ export default function AgencyPayoutsPage() {
   return (
     <div>
       <PageHeader
-        title="Payouts"
-        description="Your earnings and payout history from WanderPool"
+        title="Earnings"
+        description="Your weekly earnings from WanderPool — grouped by activity date"
       />
 
       {/* Summary cards */}
@@ -130,21 +163,64 @@ export default function AgencyPayoutsPage() {
         </div>
       )}
 
-      {/* Filter */}
-      <div className="flex items-center gap-3 mb-5">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Payouts</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
-          </SelectContent>
-        </Select>
-        <span className="text-sm text-muted-foreground ml-auto">
+      {/* Filters */}
+      <div className="flex flex-wrap items-end gap-3 mb-5">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Period</Label>
+          <Select value={preset} onValueChange={(v) => {
+            setPreset(v);
+            if (v !== "custom") { setCustomFrom(""); setCustomTo(""); }
+          }}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_time">All Time</SelectItem>
+              <SelectItem value="this_week">This Week</SelectItem>
+              <SelectItem value="last_week">Last Week</SelectItem>
+              <SelectItem value="last_4_weeks">Last 4 Weeks</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {preset === "custom" && (
+          <>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">From</Label>
+              <Input type="date" className="w-40" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">To</Label>
+              <Input type="date" className="w-40" value={customTo} onChange={e => setCustomTo(e.target.value)} />
+            </div>
+          </>
+        )}
+
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Status</Label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {(preset !== "all_time" || statusFilter !== "all") && (
+          <Button variant="ghost" size="sm" className="self-end text-muted-foreground"
+            onClick={() => { setPreset("all_time"); setStatusFilter("all"); setCustomFrom(""); setCustomTo(""); }}>
+            <X className="h-3.5 w-3.5 mr-1" /> Clear
+          </Button>
+        )}
+
+        <span className="text-sm text-muted-foreground ml-auto self-end">
           {filtered.length} payout{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -157,16 +233,17 @@ export default function AgencyPayoutsPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No payouts found"
-          description={statusFilter === "all" ? "Your payout history will appear here after your first completed booking." : `No ${statusFilter} payouts.`}
+          description={statusFilter === "all" ? "Your payout history will appear here after your first completed booking." : `No ${statusFilter} payouts for this period.`}
         />
       ) : (
         <div className="rounded-xl border bg-card overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead>Period</TableHead>
+                <TableHead>Week (Activity Date)</TableHead>
                 <TableHead className="text-center">Bookings</TableHead>
                 <TableHead>Amount</TableHead>
+                <TableHead>Breakdown</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Paid Date</TableHead>
@@ -186,6 +263,14 @@ export default function AgencyPayoutsPage() {
                   </TableCell>
                   <TableCell className="font-semibold text-sm">
                     {paiseToCurrency(payout.amount_paise)}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {payout.partial_payment_paise > 0 ? (
+                      <div className="space-y-0.5">
+                        <p>Full: {paiseToCurrency(payout.full_payment_paise)}</p>
+                        <p className="text-blue-600">Partial: {paiseToCurrency(payout.partial_payment_paise)}</p>
+                      </div>
+                    ) : "—"}
                   </TableCell>
                   <TableCell>
                     <span className={cn(
@@ -209,9 +294,9 @@ export default function AgencyPayoutsPage() {
         </div>
       )}
 
-      {/* Info note */}
       <p className="text-xs text-muted-foreground mt-4 text-center">
         WanderPool retains a 12–15% platform fee. You receive 85–88% of each booking value.
+        Partial payments are prorated accordingly.
       </p>
     </div>
   );

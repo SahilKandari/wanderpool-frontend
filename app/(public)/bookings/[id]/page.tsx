@@ -34,6 +34,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getBooking, cancelBooking, bookingKeys } from "@/lib/api/bookings";
+import { downloadReceiptPDF, shareReceiptPDF } from "@/lib/utils/receipt";
 import type { Booking, BookingStatus } from "@/lib/types/booking";
 import { cn } from "@/lib/utils";
 
@@ -83,47 +84,6 @@ function fmt(paise: number) {
   return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
 }
 
-function downloadVoucher(booking: Booking) {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) return;
-  printWindow.document.write(`
-    <html><head>
-      <title>Booking Voucher — ${booking.booking_code}</title>
-      <style>
-        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; color: #1e293b; }
-        h1 { font-size: 1.5rem; margin-bottom: 4px; }
-        .subtitle { color: #64748b; font-size: 0.875rem; margin-bottom: 24px; }
-        .badge { display: inline-block; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem; }
-        td:first-child { color: #64748b; width: 45%; }
-        td:last-child { font-weight: 600; }
-        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #94a3b8; text-align: center; }
-      </style>
-    </head><body>
-      <h1>Booking Voucher</h1>
-      <div class="subtitle">WanderPool — Your adventure awaits</div>
-      <div class="badge">✓ ${STATUS_CONFIG[booking.status]?.label ?? booking.status}</div>
-      <table>
-        <tr><td>Booking Code</td><td>${booking.booking_code}</td></tr>
-        <tr><td>Experience</td><td>${booking.experience_title}</td></tr>
-        <tr><td>Date</td><td>${new Date(booking.slot_date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</td></tr>
-        <tr><td>Time</td><td>${booking.slot_start_time}</td></tr>
-        <tr><td>Participants</td><td>${booking.participants}</td></tr>
-        <tr><td>Guest Name</td><td>${booking.customer_name}</td></tr>
-        <tr><td>Email</td><td>${booking.customer_email}</td></tr>
-        <tr><td>Phone</td><td>${booking.customer_phone}</td></tr>
-        <tr><td>Amount Paid</td><td>${fmt(booking.amount_paid_paise ?? 0)}</td></tr>
-        <tr><td>Total Amount</td><td>${fmt(booking.total_paise)}</td></tr>
-        <tr><td>Payment Mode</td><td>${booking.payment_mode === "partial" ? "Partial (booking fee)" : "Full payment"}</td></tr>
-      </table>
-      <div class="footer">WanderPool · Uttarakhand Adventures · support via WhatsApp 7am–8pm</div>
-    </body></html>
-  `);
-  printWindow.document.close();
-  printWindow.print();
-}
-
 export default function BookingDetailPage({
   params,
 }: {
@@ -134,6 +94,8 @@ export default function BookingDetailPage({
   const qc = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || user.actorKind !== "customer")) {
@@ -221,25 +183,30 @@ export default function BookingDetailPage({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => downloadVoucher(booking)}
-                className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 transition-colors"
-                title="Download voucher"
+                onClick={async () => {
+                  setDownloading(true);
+                  try { await downloadReceiptPDF(booking); }
+                  catch { toast.error("Failed to generate PDF. Please try again."); }
+                  finally { setDownloading(false); }
+                }}
+                disabled={downloading}
+                className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 transition-colors disabled:opacity-60"
+                title="Download booking"
               >
-                <Download className="h-4 w-4 text-slate-500" />
+                {downloading ? <Loader2 className="h-4 w-4 text-slate-500 animate-spin" /> : <Download className="h-4 w-4 text-slate-500" />}
               </button>
               <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: booking.experience_title, text: `My booking: ${booking.booking_code}` });
-                  } else {
-                    navigator.clipboard.writeText(booking.booking_code);
-                    toast.success("Booking code copied!");
-                  }
+                onClick={async () => {
+                  setSharing(true);
+                  try { await shareReceiptPDF(booking); }
+                  catch { toast.error("Unable to share. Try downloading instead."); }
+                  finally { setSharing(false); }
                 }}
-                className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 transition-colors"
-                title="Share"
+                disabled={sharing}
+                className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 transition-colors disabled:opacity-60"
+                title="Share booking"
               >
-                <Share2 className="h-4 w-4 text-slate-500" />
+                {sharing ? <Loader2 className="h-4 w-4 text-slate-500 animate-spin" /> : <Share2 className="h-4 w-4 text-slate-500" />}
               </button>
             </div>
           </div>
@@ -385,11 +352,17 @@ export default function BookingDetailPage({
               </button>
             )}
             <button
-              onClick={() => downloadVoucher(booking)}
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors"
+              onClick={async () => {
+                setDownloading(true);
+                try { await downloadReceiptPDF(booking); }
+                catch { toast.error("Failed to generate PDF. Please try again."); }
+                finally { setDownloading(false); }
+              }}
+              disabled={downloading}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-60"
             >
-              <Download className="h-4 w-4" />
-              Voucher
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {downloading ? "Generating…" : "Download Booking"}
             </button>
           </div>
         </motion.div>

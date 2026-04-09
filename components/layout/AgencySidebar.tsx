@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
   { label: "Bookings",         href: "/agency/bookings",     icon: BookOpen,        roles: ["agency"] },
   { label: "Schedule",         href: "/agency/schedule",     icon: CalendarDays,    roles: ["agency"] },
   { label: "Guides",           href: "/agency/guides",       icon: Users,           roles: ["agency"] },
-  { label: "Payouts",          href: "/agency/payouts",      icon: CreditCard,      roles: ["agency"] },
+  { label: "Earnings",         href: "/agency/payouts",      icon: CreditCard,      roles: ["agency"] },
   { label: "Settings",         href: "/agency/settings",     icon: Settings,        roles: ["agency"] },
   { label: "Dashboard",        href: "/operator/dashboard",  icon: LayoutDashboard, roles: ["operator"] },
   { label: "My Bookings",      href: "/operator/bookings",   icon: BookMarked,      roles: ["operator"] },

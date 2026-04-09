@@ -57,7 +57,10 @@ export interface Operator {
 export interface Payout {
   id: string;
   agency_id: string;
+  agency_name: string;
   amount_paise: number;
+  full_payment_paise: number;
+  partial_payment_paise: number;
   status: "pending" | "processing" | "paid" | "failed";
   booking_count: number;
   period_start: string;
