@@ -145,7 +145,7 @@ function AgencyCard({
       <div className="grid grid-cols-3 gap-3 pt-1 border-t">
         <div className="text-center">
           <p className={cn("text-base font-bold", healthColor(agency.health_score ?? 0))}>
-            {agency.health_score ?? "—"}
+            {agency.health_score != null ? Number(agency.health_score).toFixed(2) : "—"}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">Health</p>
         </div>
