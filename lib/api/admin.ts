@@ -8,6 +8,20 @@ export const adminKeys = {
   agency: (id: string) => [...adminKeys.all, "agencies", id] as const,
 };
 
+export async function adminGetAgency(id: string): Promise<Agency> {
+  return apiFetch<Agency>(`/admin/agencies/${id}`);
+}
+
+export async function adminUpdateGates(
+  id: string,
+  gates: { bank_verified?: boolean; certs_verified?: boolean; video_call_done?: boolean }
+): Promise<Agency> {
+  return apiFetch<Agency>(`/admin/agencies/${id}/gates`, {
+    method: "PATCH",
+    body: JSON.stringify(gates),
+  });
+}
+
 export async function adminListAgencies(params?: {
   status?: string;
   limit?: number;

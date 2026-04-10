@@ -12,8 +12,8 @@ import {
   Settings,
   BookMarked,
   Clock,
-  CheckSquare,
   Star,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
@@ -27,6 +27,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard",        href: "/agency/dashboard",    icon: LayoutDashboard, roles: ["agency"] },
+  { label: "Onboarding",       href: "/agency/onboarding",  icon: ClipboardList,   roles: ["agency"] },
   { label: "Experiences",      href: "/agency/experiences",  icon: Map,             roles: ["agency"] },
   { label: "Bookings",         href: "/agency/bookings",     icon: BookOpen,        roles: ["agency"] },
   { label: "Schedule",         href: "/agency/schedule",     icon: CalendarDays,    roles: ["agency"] },

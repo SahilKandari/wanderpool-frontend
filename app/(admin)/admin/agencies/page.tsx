@@ -2,14 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, PauseCircle, Building2,
-  Search, Filter, MoreVertical, Star, TrendingUp,
+  Search, Filter, MoreVertical, TrendingUp, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -47,16 +47,6 @@ import {
 import type { Agency } from "@/lib/types/auth";
 import { cn } from "@/lib/utils";
 
-function statusVariant(status: string) {
-  switch (status) {
-    case "active": return "default";
-    case "pending": return "secondary";
-    case "suspended": return "destructive";
-    case "rejected": return "outline";
-    default: return "secondary";
-  }
-}
-
 function statusColor(status: string) {
   switch (status) {
     case "active": return "text-emerald-600 bg-emerald-50 border-emerald-200";
@@ -78,11 +68,13 @@ function AgencyCard({
   onApprove,
   onReject,
   onSuspend,
+  onViewDetails,
 }: {
   agency: Agency;
   onApprove: (a: Agency) => void;
   onReject: (a: Agency) => void;
   onSuspend: (a: Agency) => void;
+  onViewDetails: (a: Agency) => void;
 }) {
   return (
     <div className="bg-card rounded-xl border p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
@@ -159,15 +151,24 @@ function AgencyCard({
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Joined {new Date(agency.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-      </p>
+      <div className="flex items-center justify-between pt-1 border-t">
+        <p className="text-xs text-muted-foreground">
+          Joined {new Date(agency.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+        </p>
+        <button
+          onClick={() => onViewDetails(agency)}
+          className="text-xs text-primary font-medium flex items-center gap-0.5 hover:underline"
+        >
+          View Details <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
 
 export default function AdminAgenciesPage() {
   const qc = useQueryClient();
+  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [rejectTarget, setRejectTarget] = useState<Agency | null>(null);
@@ -303,6 +304,7 @@ export default function AdminAgenciesPage() {
               onApprove={(a) => approveMutation.mutate(a.id)}
               onReject={setRejectTarget}
               onSuspend={(a) => suspendMutation.mutate(a.id)}
+              onViewDetails={(a) => router.push(`/admin/agencies/${a.id}`)}
             />
           ))}
         </div>

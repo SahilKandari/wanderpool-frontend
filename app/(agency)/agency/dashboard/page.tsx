@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Map, BookOpen, Star, TrendingUp } from "lucide-react";
+import { Map, BookOpen, Star, TrendingUp, ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +11,30 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ExperienceStatusBadge } from "@/components/shared/StatusBadge";
 import { paiseToCurrency } from "@/lib/utils/currency";
+import { apiFetch } from "@/lib/api/client";
+
+interface OnboardingStatus {
+  onboarding_submitted_at: string | null;
+  bank_verified: boolean;
+  certs_verified: boolean;
+  video_call_done: boolean;
+  agreement_signed: boolean;
+}
 
 export default function AgencyDashboardPage() {
   const { user } = useAuth();
+
+  const { data: onboarding } = useQuery<OnboardingStatus>({
+    queryKey: ["agency", "onboarding"],
+    queryFn: () => apiFetch("/agency/onboarding"),
+  });
+
+  const onboardingDone = !!onboarding?.onboarding_submitted_at;
+  const allGatesCleared =
+    onboarding?.bank_verified &&
+    onboarding?.certs_verified &&
+    onboarding?.video_call_done &&
+    onboarding?.agreement_signed;
 
   const { data: experiences = [], isLoading } = useQuery({
     queryKey: experienceKeys.mine(),
@@ -70,6 +91,32 @@ export default function AgencyDashboardPage() {
           </Button>
         }
       />
+
+      {/* Onboarding banner */}
+      {!onboardingDone && (
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+          <ClipboardList className="h-5 w-5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">Complete your onboarding</p>
+            <p className="text-xs mt-0.5">Upload your KYC documents and sign the operator agreement to activate your account.</p>
+          </div>
+          <Button size="sm" asChild className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white border-0">
+            <Link href="/agency/onboarding">Start Now</Link>
+          </Button>
+        </div>
+      )}
+      {onboardingDone && !allGatesCleared && (
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800">
+          <ClipboardList className="h-5 w-5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">Documents under review</p>
+            <p className="text-xs mt-0.5">Our team is verifying your documents. You&apos;ll be notified once all gates are cleared.</p>
+          </div>
+          <Button size="sm" variant="outline" asChild className="shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100">
+            <Link href="/agency/onboarding">View Status</Link>
+          </Button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
