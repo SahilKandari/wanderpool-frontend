@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -69,10 +69,13 @@ export default function BookPage({
   const [selectedSlot, setSelectedSlot] = useState<string>(
     searchParams.get("slot") ?? ""
   );
+  const [dateFilter, setDateFilter] = useState("");
   const [paymentMode, setPaymentMode] = useState<"full" | "partial">("full");
   const [loading, setLoading] = useState(false);
   const [partialEnabled, setPartialEnabled] = useState(true);
   const [commissionPct, setCommissionPct] = useState(13);
+  const selectedSlotRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -108,6 +111,36 @@ export default function BookPage({
     queryFn: () => listExperienceSlots(exp!.id),
     enabled: !!exp?.id,
   });
+
+  // Filter slots by selected date (if any), otherwise show all
+  const filteredSlots = dateFilter
+    ? slots.filter((s) => {
+        const slotDate = new Date(s.starts_at)
+          .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }); // YYYY-MM-DD
+        return slotDate === dateFilter;
+      })
+    : slots;
+
+  // Auto-scroll to the pre-selected slot once slots load
+  useEffect(() => {
+    if (!selectedSlot || !slots.length) return;
+    // If a slot is pre-selected from URL and it's not in the current filtered view, clear date filter
+    const match = slots.find((s) => s.id === selectedSlot);
+    if (match) {
+      const slotDate = new Date(match.starts_at)
+        .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+      setDateFilter(slotDate);
+    }
+  }, [slots, selectedSlot]);
+
+  // Scroll selected slot into view when it becomes visible
+  useEffect(() => {
+    if (selectedSlotRef.current) {
+      setTimeout(() => {
+        selectedSlotRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    }
+  }, [selectedSlot, filteredSlots]);
 
   const slot = slots.find((s) => s.id === selectedSlot);
   const pricePerPax = slot?.base_price_paise ?? exp?.base_price_paise ?? 0;
@@ -216,20 +249,51 @@ export default function BookPage({
                 <Calendar className="h-4 w-4 text-primary" />
                 Select date & time
               </h2>
+
+              {/* Date filter */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
+                  Filter by date
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => {
+                      setDateFilter(e.target.value);
+                      setSelectedSlot(""); // reset selection on date change
+                    }}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                  {dateFilter && (
+                    <button
+                      onClick={() => { setDateFilter(""); setSelectedSlot(""); }}
+                      className="text-xs text-slate-400 hover:text-slate-600 border border-slate-200 px-3 py-2 rounded-xl"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {slotsLoading ? (
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading slots…
                 </div>
-              ) : slots.length === 0 ? (
+              ) : filteredSlots.length === 0 ? (
                 <p className="text-sm text-slate-500">
-                  No available slots right now. Check back soon.
+                  {dateFilter
+                    ? "No available slots on this date. Try a different date."
+                    : "No available slots right now. Check back soon."}
                 </p>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {slots.map((s) => (
+                <div ref={listRef} className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {filteredSlots.map((s) => (
                     <button
                       key={s.id}
+                      ref={selectedSlot === s.id ? selectedSlotRef : null}
                       onClick={() => setSelectedSlot(s.id)}
                       disabled={s.spots_left < participants}
                       className={cn(

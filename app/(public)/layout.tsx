@@ -195,7 +195,7 @@ function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
@@ -208,18 +208,15 @@ function Footer() {
             </p>
           </div>
           <div>
-            <p className="font-semibold text-white text-sm mb-4">Explore</p>
-            <ul className="space-y-2 text-sm">
-              {["River Rafting", "Trekking", "Camping", "Paragliding", "Yoga Retreats"].map(l => (
-                <li key={l}><Link href="/experiences" className="hover:text-white transition-colors">{l}</Link></li>
-              ))}
-            </ul>
-          </div>
-          <div>
             <p className="font-semibold text-white text-sm mb-4">Company</p>
             <ul className="space-y-2 text-sm">
-              {["About Us", "For Operators", "Safety", "Blog", "Contact"].map(l => (
-                <li key={l}><span className="hover:text-white transition-colors cursor-pointer">{l}</span></li>
+              {[
+                { label: "About Us", href: "/about" },
+                { label: "For Operators", href: "/for-operators" },
+                { label: "Safety", href: "/safety" },
+                { label: "Contact", href: "/contact" },
+              ].map(l => (
+                <li key={l.href}><Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link></li>
               ))}
             </ul>
           </div>

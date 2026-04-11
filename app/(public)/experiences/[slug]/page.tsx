@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -93,7 +93,7 @@ export default function ExperienceDetailPage({
   const [bookingDate, setBookingDate] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
-
+  const [shareCopied, setShareCopied] = useState(false);
 
   const { data: exp, isLoading, isError } = useQuery({
     queryKey: experienceKeys.detail(slug),
@@ -124,6 +124,18 @@ export default function ExperienceDetailPage({
     queryFn: () => listExperienceSlots(exp!.id, bookingDate),
     enabled: !!exp?.id && bookingDate !== "",
   });
+
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    const title = exp?.title ?? "Check out this experience on WanderPool";
+    if (navigator.share) {
+      try { await navigator.share({ title, url }); } catch { /* dismissed */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  }, [exp?.title]);
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !exp) return <NotFound />;
@@ -203,8 +215,17 @@ export default function ExperienceDetailPage({
           </Link>
         </div>
         <div className="absolute top-4 right-4 flex gap-2">
-          <button className="h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-colors">
+          <button
+            onClick={handleShare}
+            title={shareCopied ? "Link copied!" : "Share this experience"}
+            className="h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-colors relative"
+          >
             <Share2 className="h-4 w-4" />
+            {shareCopied && (
+              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
+                Copied!
+              </span>
+            )}
           </button>
           <button
             onClick={() => toggleFavourite(`/experiences/${slug}`)}
@@ -269,7 +290,7 @@ export default function ExperienceDetailPage({
                 {exp.total_bookings > 0 && (
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    {exp.total_bookings}+ booked
+                    {exp.total_bookings.toLocaleString("en-IN")} booked
                   </span>
                 )}
               </div>
