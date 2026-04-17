@@ -77,6 +77,7 @@ export default function BookPage({
   const [commissionPct, setCommissionPct] = useState(13);
   const selectedSlotRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const urlSlotInitialized = useRef(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -122,26 +123,25 @@ export default function BookPage({
       })
     : slots;
 
-  // Auto-scroll to the pre-selected slot once slots load
+  // Auto-detect date from pre-selected slot (URL param only — runs once when slots load)
   useEffect(() => {
-    if (!selectedSlot || !slots.length) return;
-    // If a slot is pre-selected from URL and it's not in the current filtered view, clear date filter
+    if (!selectedSlot || !slots.length || urlSlotInitialized.current) return;
+    urlSlotInitialized.current = true;
     const match = slots.find((s) => s.id === selectedSlot);
     if (match) {
       const slotDate = new Date(match.starts_at)
         .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
       setDateFilter(slotDate);
     }
-  }, [slots, selectedSlot]);
+  }, [slots]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Scroll selected slot into view when it becomes visible
+  // Scroll pre-selected slot into view after date filter is applied (URL param case only)
   useEffect(() => {
-    if (selectedSlotRef.current) {
-      setTimeout(() => {
-        selectedSlotRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 80);
-    }
-  }, [selectedSlot, filteredSlots]);
+    if (!urlSlotInitialized.current || !selectedSlotRef.current) return;
+    setTimeout(() => {
+      selectedSlotRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 80);
+  }, [filteredSlots]);
 
   const slot = slots.find((s) => s.id === selectedSlot);
   const pricePerPax = slot?.base_price_paise ?? exp?.base_price_paise ?? 0;
