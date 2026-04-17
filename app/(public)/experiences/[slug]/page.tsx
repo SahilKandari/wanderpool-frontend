@@ -26,6 +26,8 @@ import {
   Loader2,
   MessageSquare,
   ThumbsUp,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { getExperienceBySlug, experienceKeys } from "@/lib/api/experiences";
 import { listExperienceSlots, bookingKeys } from "@/lib/api/bookings";
@@ -94,6 +96,7 @@ export default function ExperienceDetailPage({
   const [selectedSlotId, setSelectedSlotId] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
   const [shareCopied, setShareCopied] = useState(false);
+  const [meetingCopied, setMeetingCopied] = useState(false);
   const [showMobileBook, setShowMobileBook] = useState(true);
   const bookingCardRef = useRef<HTMLDivElement>(null);
 
@@ -351,11 +354,37 @@ export default function ExperienceDetailPage({
             {/* Meeting point */}
             {exp.meeting_point && (
               <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
-                <h3 className="text-sm font-semibold text-slate-900 mb-1 flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary shrink-0" />
                   Meeting Point
                 </h3>
-                <p className="text-sm text-slate-600">{exp.meeting_point}</p>
+                <p className="text-sm text-slate-600 wrap-break-word line-clamp-2 mb-2 leading-relaxed">
+                  {exp.meeting_point}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(exp.meeting_point!);
+                      setMeetingCopied(true);
+                      setTimeout(() => setMeetingCopied(false), 2000);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <Copy className="h-3 w-3" />
+                    {meetingCopied ? "Copied!" : "Copy"}
+                  </button>
+                  {exp.meeting_point.startsWith("http") && (
+                    <a
+                      href={exp.meeting_point}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Open in Maps
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 
