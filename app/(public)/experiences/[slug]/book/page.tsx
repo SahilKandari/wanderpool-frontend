@@ -75,9 +75,7 @@ export default function BookPage({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [partialEnabled, setPartialEnabled] = useState(true);
   const [commissionPct, setCommissionPct] = useState(13);
-  const selectedSlotRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const urlSlotInitialized = useRef(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -125,8 +123,7 @@ export default function BookPage({
 
   // Auto-detect date from pre-selected slot (URL param only — runs once when slots load)
   useEffect(() => {
-    if (!selectedSlot || !slots.length || urlSlotInitialized.current) return;
-    urlSlotInitialized.current = true;
+    if (!selectedSlot || !slots.length) return;
     const match = slots.find((s) => s.id === selectedSlot);
     if (match) {
       const slotDate = new Date(match.starts_at)
@@ -134,14 +131,6 @@ export default function BookPage({
       setDateFilter(slotDate);
     }
   }, [slots]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Scroll pre-selected slot into view after date filter is applied (URL param case only)
-  useEffect(() => {
-    if (!urlSlotInitialized.current || !selectedSlotRef.current) return;
-    setTimeout(() => {
-      selectedSlotRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 80);
-  }, [filteredSlots]);
 
   const slot = slots.find((s) => s.id === selectedSlot);
   const pricePerPax = slot?.base_price_paise ?? exp?.base_price_paise ?? 0;
@@ -294,7 +283,6 @@ export default function BookPage({
                   {filteredSlots.map((s) => (
                     <button
                       key={s.id}
-                      ref={selectedSlot === s.id ? selectedSlotRef : null}
                       onClick={() => setSelectedSlot(s.id)}
                       disabled={s.spots_left < participants}
                       className={cn(
