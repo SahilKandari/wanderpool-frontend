@@ -170,7 +170,7 @@ export default function AdminExperiencesPage() {
       />
 
       {/* Stats strip */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total", value: total, color: "text-foreground" },
           { label: "Active", value: activeCount, color: "text-emerald-600" },
@@ -189,8 +189,8 @@ export default function AdminExperiencesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by title…"
@@ -200,7 +200,7 @@ export default function AdminExperiencesPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
@@ -215,24 +215,80 @@ export default function AdminExperiencesPage() {
         </Select>
       </div>
 
-      {/* Table */}
+      {/* Mobile card list — visible below sm */}
+      <div className="block sm:hidden space-y-3 mb-4">
+        {isLoading ? (
+          [...Array(5)].map((_, i) => (
+            <div key={i} className="rounded-xl border bg-white p-4 space-y-2">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            title="No experiences found"
+            description={search || statusFilter !== "all" ? "Try adjusting your filters." : "No experiences have been created yet."}
+          />
+        ) : (
+          filtered.map((exp) => (
+            <div key={exp.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-sm text-slate-900 leading-snug flex-1 truncate">{exp.title}</p>
+                <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border shrink-0", statusClasses(exp.status))}>
+                  {statusLabel(exp.status)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-slate-500">
+                <Map className="h-3 w-3" />
+                <span>{exp.location_city}, {exp.location_state}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span className="font-semibold text-slate-700">{paiseToCurrency(exp.base_price_paise)}</span>
+                <span>{exp.avg_rating > 0 ? `${exp.avg_rating.toFixed(1)}★ · ${exp.total_bookings} bookings` : `${exp.total_bookings} bookings`}</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                {exp.status !== "active" && (
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" onClick={() => approveMutation.mutate(exp.id)}>
+                    <CheckCircle2 className="h-3 w-3 mr-1" />Approve
+                  </Button>
+                )}
+                {exp.status === "active" && (
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-orange-700 border-orange-300 hover:bg-orange-50" onClick={() => pauseMutation.mutate(exp.id)}>
+                    <PauseCircle className="h-3 w-3 mr-1" />Pause
+                  </Button>
+                )}
+                {exp.status !== "rejected" && (
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-destructive border-red-200 hover:bg-red-50" onClick={() => setRejectTarget(exp)}>
+                    <XCircle className="h-3 w-3 mr-1" />Reject
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table — hidden below sm */}
       {isLoading ? (
-        <div className="space-y-2">
+        <div className="hidden sm:block space-y-2">
           {[...Array(8)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState
-          title="No experiences found"
-          description={
-            search || statusFilter !== "all"
-              ? "Try adjusting your filters."
-              : "No experiences have been created yet."
-          }
-        />
+        <div className="hidden sm:block">
+          <EmptyState
+            title="No experiences found"
+            description={
+              search || statusFilter !== "all"
+                ? "Try adjusting your filters."
+                : "No experiences have been created yet."
+            }
+          />
+        </div>
       ) : (
-        <div className="rounded-xl border overflow-hidden">
+        <div className="hidden sm:block rounded-xl border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

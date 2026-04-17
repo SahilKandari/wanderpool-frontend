@@ -232,7 +232,7 @@ export default function HomePage() {
   return (
     <div className="bg-white">
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative h-screen min-h-[600px] max-h-[900px] overflow-hidden">
+      <section ref={heroRef} className="relative h-svh min-h-145 max-h-225 overflow-hidden">
         {/* Slides */}
         <AnimatePresence mode="sync">
           <motion.div
@@ -259,10 +259,10 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
 
-        {/* Slide label */}
+        {/* Slide label — desktop only (would overlap hero text on mobile) */}
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="absolute top-24 left-6 sm:left-12"
+          className="hidden sm:block absolute top-24 left-6 sm:left-12"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -285,19 +285,19 @@ export default function HomePage() {
         {/* Hero content */}
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pt-16 sm:pt-0"
         >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <span className="inline-flex items-center gap-2 text-amber-400 text-sm font-semibold tracking-widest uppercase mb-4">
-              <span className="h-px w-8 bg-amber-400 inline-block" />
+            <span className="inline-flex items-center gap-1.5 sm:gap-2 text-amber-400 text-xs sm:text-sm font-semibold tracking-wider sm:tracking-widest uppercase mb-3 sm:mb-4">
+              <span className="h-px w-6 sm:w-8 bg-amber-400 inline-block" />
               Uttarakhand Adventures
-              <span className="h-px w-8 bg-amber-400 inline-block" />
+              <span className="h-px w-6 sm:w-8 bg-amber-400 inline-block" />
             </span>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white leading-[1.05] mb-6 max-w-4xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-4 sm:mb-6 max-w-4xl">
               Your Next
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
@@ -305,7 +305,7 @@ export default function HomePage() {
               </span>{" "}
               Awaits
             </h1>
-            <p className="text-lg text-white/75 max-w-lg mx-auto mb-10 leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg text-white/75 max-w-xs sm:max-w-md md:max-w-lg mx-auto mb-6 sm:mb-10 leading-relaxed px-2 sm:px-0">
               Book verified river rafting, treks, camping and more with trusted local guides in Rishikesh & Mussoorie.
             </p>
           </motion.div>
@@ -322,23 +322,23 @@ export default function HomePage() {
                 e.preventDefault();
                 window.location.href = `/experiences?q=${encodeURIComponent(search)}`;
               }}
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2 shadow-2xl"
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-1.5 sm:p-2 shadow-2xl"
             >
-              <div className="flex items-center gap-3 flex-1 px-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 px-2 sm:px-3 min-w-0">
                 <Search className="h-4 w-4 text-white/60 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search rafting, trekking, paragliding…"
+                  placeholder="Search rafting, trekking…"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="flex-1 bg-transparent text-white placeholder:text-white/50 text-sm outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-white placeholder:text-white/50 text-sm outline-none"
                 />
               </div>
               <button
                 type="submit"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors shadow-lg"
+                className="flex items-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors shadow-lg shrink-0"
               >
-                Search
+                <span className="hidden sm:inline">Search</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
@@ -359,7 +359,7 @@ export default function HomePage() {
         </motion.div>
 
         {/* Slide dots */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
           {HERO_SLIDES.map((_, i) => (
             <button
               key={i}
@@ -372,9 +372,9 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator — desktop only */}
         <motion.div
-          className="absolute bottom-8 right-8 flex flex-col items-center gap-1 text-white/50"
+          className="hidden sm:flex absolute bottom-8 right-8 flex-col items-center gap-1 text-white/50"
           animate={{ y: [0, 6, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >

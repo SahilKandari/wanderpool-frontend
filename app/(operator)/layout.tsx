@@ -16,8 +16,8 @@ export default function OperatorLayout({
     <div className="flex h-screen overflow-hidden">
       <AgencySidebar />
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-60">
-          <AgencySidebar />
+        <SheetContent side="left" className="p-0 w-64">
+          <AgencySidebar mobile onNavClick={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
       <div className="flex flex-1 flex-col overflow-hidden">

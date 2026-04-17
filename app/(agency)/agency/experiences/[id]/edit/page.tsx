@@ -166,43 +166,47 @@ export default function EditExperiencePage({
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold truncate">Edit: {experience.title}</h1>
-          <p className="text-sm text-muted-foreground capitalize">
-            Status: <span className="font-medium">{experience.status.replace("_", " ")}</span>
-          </p>
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold truncate">Edit: {experience.title}</h1>
+            <p className="text-sm text-muted-foreground capitalize">
+              Status: <span className="font-medium">{experience.status.replace("_", " ")}</span>
+            </p>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/agency/experiences/${id}/slots`)}
-        >
-          Manage Slots
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/agency/experiences/${id}/images`)}
-        >
-          Manage Photos
-        </Button>
+        <div className="flex gap-2 pl-11 sm:pl-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/agency/experiences/${id}/slots`)}
+          >
+            Manage Slots
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/agency/experiences/${id}/images`)}
+          >
+            Manage Photos
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border shadow-sm">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
             <Tabs defaultValue="details">
-              <TabsList className="mb-6 w-full">
-                <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
-                <TabsTrigger value="pricing" className="flex-1">Pricing & Policy</TabsTrigger>
-                <TabsTrigger value="activity" className="flex-1">Activity Info</TabsTrigger>
+              <TabsList className="mb-6 w-full grid grid-cols-2 h-auto gap-1 sm:flex sm:h-10">
+                <TabsTrigger value="details" className="py-2 text-xs sm:text-sm sm:flex-1">Details</TabsTrigger>
+                <TabsTrigger value="pricing" className="py-2 text-xs sm:text-sm sm:flex-1">Pricing & Policy</TabsTrigger>
+                <TabsTrigger value="activity" className="py-2 text-xs sm:text-sm sm:flex-1">Activity Info</TabsTrigger>
                 <TabsTrigger
                   value="slots"
-                  className="flex-1"
+                  className="py-2 text-xs sm:text-sm sm:flex-1"
                   onClick={() => router.push(`/agency/experiences/${id}/slots`)}
                 >
                   Slots
@@ -225,7 +229,7 @@ export default function EditExperiencePage({
                     <p className="text-xs text-destructive">{errors.description.message}</p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>Location Name <span className="text-destructive">*</span></Label>
                     <Input {...register("location_name")} />
@@ -249,7 +253,7 @@ export default function EditExperiencePage({
 
               {/* Tab: Pricing & Policy */}
               <TabsContent value="pricing" className="space-y-4 mt-0">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>Base Price (₹) <span className="text-destructive">*</span></Label>
                     <div className="relative">
@@ -292,7 +296,7 @@ export default function EditExperiencePage({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>Min Participants</Label>
                     <Controller
@@ -345,7 +349,7 @@ export default function EditExperiencePage({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>Inclusions</Label>
                     <Textarea

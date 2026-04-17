@@ -177,8 +177,8 @@ export default function AdminSchedulePage() {
       </div>
 
       <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-7 gap-3">
+        <CardContent className="p-4 overflow-x-auto">
+          <div className="grid grid-cols-7 gap-3 min-w-140">
             {weekDays.map((day) => {
               const ymd = toYMD(day);
               return (

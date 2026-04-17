@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar />
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="p-0 w-60 bg-slate-900">
-          <AdminSidebar />
+          <AdminSidebar mobile onNavClick={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
       <div className="flex flex-1 flex-col overflow-hidden">

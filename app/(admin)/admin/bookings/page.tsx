@@ -100,7 +100,7 @@ export default function AdminBookingsPage() {
       />
 
       {/* Stats strip */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: "Total Bookings", value: total, color: "text-foreground" },
           { label: "Confirmed", value: confirmed, color: "text-emerald-600" },
@@ -136,8 +136,8 @@ export default function AdminBookingsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by code or customer…"
@@ -147,7 +147,7 @@ export default function AdminBookingsPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
@@ -162,24 +162,71 @@ export default function AdminBookingsPage() {
         </Select>
       </div>
 
-      {/* Table */}
+      {/* Mobile card list — visible below sm */}
+      <div className="block sm:hidden space-y-3 mb-4">
+        {isLoading ? (
+          [...Array(5)].map((_, i) => (
+            <div key={i} className="rounded-xl border bg-white p-4 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            title="No bookings found"
+            description={search || statusFilter !== "all" ? "Try adjusting your filters." : "No bookings have been made yet."}
+          />
+        ) : (
+          filtered.map((booking) => (
+            <div key={booking.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-slate-500">{booking.booking_code}</span>
+                <BookingStatusBadge status={booking.status} />
+              </div>
+              <p className="font-semibold text-sm text-slate-900 truncate">{booking.experience_title}</p>
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>{formatDate(booking.slot_date)} · {booking.participants} pax</span>
+                <span className="font-semibold text-slate-700">{paiseToCurrency(booking.total_paise)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">{booking.customer_name}</p>
+                {booking.status === "disputed" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                    onClick={() => setResolveTarget(booking)}
+                  >
+                    <ShieldAlert className="h-3 w-3 mr-1" />Resolve
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table — hidden below sm */}
       {isLoading ? (
-        <div className="space-y-2">
+        <div className="hidden sm:block space-y-2">
           {[...Array(10)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState
-          title="No bookings found"
-          description={
-            search || statusFilter !== "all"
-              ? "Try adjusting your filters."
-              : "No bookings have been made yet."
-          }
-        />
+        <div className="hidden sm:block">
+          <EmptyState
+            title="No bookings found"
+            description={
+              search || statusFilter !== "all"
+                ? "Try adjusting your filters."
+                : "No bookings have been made yet."
+            }
+          />
+        </div>
       ) : (
-        <div className="rounded-xl border overflow-hidden">
+        <div className="hidden sm:block rounded-xl border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

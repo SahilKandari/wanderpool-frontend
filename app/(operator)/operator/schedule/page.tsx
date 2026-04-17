@@ -125,10 +125,12 @@ export default function OperatorSchedulePage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-7 gap-2">
-          {[...Array(7)].map((_, i) => (
-            <Skeleton key={i} className="h-48 rounded-xl" />
-          ))}
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-7 gap-2 min-w-140">
+            {[...Array(7)].map((_, i) => (
+              <Skeleton key={i} className="h-48 rounded-xl" />
+            ))}
+          </div>
         </div>
       ) : !hasAnyBooking ? (
         <EmptyState
@@ -136,7 +138,8 @@ export default function OperatorSchedulePage() {
           description="You have no confirmed activities scheduled in this week."
         />
       ) : (
-        <div className="grid grid-cols-7 gap-2">
+        <div className="overflow-x-auto">
+        <div className="grid grid-cols-7 gap-2 min-w-140">
           {days.map((day) => {
             const iso = toISO(day);
             const dayBookings = byDate[iso] ?? [];
@@ -177,6 +180,7 @@ export default function OperatorSchedulePage() {
               </div>
             );
           })}
+        </div>
         </div>
       )}
     </div>

@@ -134,7 +134,7 @@ function AgencyCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 pt-1 border-t">
+      <div className="grid grid-cols-3 gap-2 pt-1 border-t">
         <div className="text-center">
           <p className={cn("text-base font-bold", healthColor(agency.health_score ?? 0))}>
             {agency.health_score != null ? Number(agency.health_score).toFixed(2) : "—"}
@@ -142,7 +142,7 @@ function AgencyCard({
           <p className="text-xs text-muted-foreground mt-0.5">Health</p>
         </div>
         <div className="text-center border-x">
-          <p className="text-base font-bold text-foreground">{agency.phone || "—"}</p>
+          <p className="text-sm font-bold text-foreground break-all leading-tight">{agency.phone || "—"}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Phone</p>
         </div>
         <div className="text-center">
@@ -228,7 +228,7 @@ export default function AdminAgenciesPage() {
       />
 
       {/* Stats strip */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total", value: agencies.length, color: "text-foreground" },
           { label: "Active", value: agencies.filter(a => a.status === "active").length, color: "text-emerald-600" },
@@ -243,8 +243,8 @@ export default function AdminAgenciesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search agencies…"
@@ -254,7 +254,7 @@ export default function AdminAgenciesPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>

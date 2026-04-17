@@ -96,78 +96,113 @@ export default function AgencyExperiencesPage() {
           }
         />
       ) : (
-        <div className="rounded-lg border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Bookings</TableHead>
-                <TableHead className="text-right">Rating</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {experiences.map((exp) => (
-                <TableRow key={exp.id}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-sm">{exp.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {exp.duration_minutes} min
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{exp.location_city}</TableCell>
-                  <TableCell className="text-sm">
-                    {paiseToCurrency(exp.base_price_paise)}
-                  </TableCell>
-                  <TableCell>
-                    <ExperienceStatusBadge status={exp.status} />
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {exp.total_bookings}
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {exp.avg_rating > 0 ? `★ ${exp.avg_rating.toFixed(1)}` : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/agency/experiences/${exp.id}/edit`}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/agency/experiences/${exp.id}/images`}>
-                            Images
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteTarget(exp)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <>
+          {/* Mobile card list — visible below sm */}
+          <div className="block sm:hidden space-y-3">
+            {experiences.map((exp) => (
+              <div key={exp.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-slate-900 truncate">{exp.title}</p>
+                    <p className="text-xs text-muted-foreground">{exp.location_city} · {exp.duration_minutes} min</p>
+                  </div>
+                  <ExperienceStatusBadge status={exp.status} />
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">{paiseToCurrency(exp.base_price_paise)}</span>
+                  <span>{exp.total_bookings} bookings{exp.avg_rating > 0 ? ` · ★${exp.avg_rating.toFixed(1)}` : ""}</span>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button asChild size="sm" variant="outline" className="h-7 px-3 text-xs flex-1">
+                    <Link href={`/agency/experiences/${exp.id}/edit`}><Pencil className="h-3 w-3 mr-1" />Edit</Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-3 text-xs text-destructive border-red-200 hover:bg-red-50"
+                    onClick={() => setDeleteTarget(exp)}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table — hidden below sm */}
+          <div className="hidden sm:block rounded-lg border bg-background overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Bookings</TableHead>
+                  <TableHead className="text-right">Rating</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {experiences.map((exp) => (
+                  <TableRow key={exp.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{exp.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {exp.duration_minutes} min
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{exp.location_city}</TableCell>
+                    <TableCell className="text-sm">
+                      {paiseToCurrency(exp.base_price_paise)}
+                    </TableCell>
+                    <TableCell>
+                      <ExperienceStatusBadge status={exp.status} />
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {exp.total_bookings}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {exp.avg_rating > 0 ? `★ ${exp.avg_rating.toFixed(1)}` : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/agency/experiences/${exp.id}/edit`}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/agency/experiences/${exp.id}/images`}>
+                              Images
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(exp)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {/* Delete confirmation */}

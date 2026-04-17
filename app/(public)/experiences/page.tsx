@@ -198,6 +198,7 @@ function ExperiencesContent() {
   const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") ?? "");
   const [categoryId, setCategoryId] = useState(searchParams.get("category_id") ?? "");
   const [showFilters, setShowFilters] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
 
@@ -260,168 +261,208 @@ function ExperiencesContent() {
     <div className="min-h-screen bg-slate-50 pt-16">
       {/* Search header */}
       <div className="bg-white border-b border-slate-100 sticky top-16 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search experiences, activities..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-slate-50 placeholder:text-slate-400"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            {/* City picker */}
-            <div className="relative" ref={cityRef}>
-              <button
-                onClick={() => setCityOpen(!cityOpen)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors min-w-35",
-                  city
-                    ? "border-primary text-primary bg-primary/5"
-                    : "border-slate-200 text-slate-600 bg-slate-50 hover:border-slate-300"
-                )}
+          {/* Mobile toggle bar — always visible, collapses the filter panel */}
+          <div className="flex sm:hidden items-center justify-between py-2.5">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Search &amp; Filters
+              {activeFilterCount > 0 && (
+                <span className="h-4 min-w-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {activeFilterCount}
+                </span>
+              )}
+            </span>
+            <button
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="flex items-center gap-1 text-xs font-semibold text-primary"
+            >
+              {filtersOpen ? "Hide" : "Show"}
+              <motion.span
+                animate={{ rotate: filtersOpen ? 180 : 0 }}
+                transition={{ duration: 0.25 }}
+                className="inline-flex"
               >
-                <MapPin className="h-4 w-4" />
-                {city || "All Cities"}
-                <ChevronDown className={cn("h-3.5 w-3.5 ml-auto transition-transform", cityOpen && "rotate-180")} />
-              </button>
-              <AnimatePresence>
-                {cityOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-1 left-0 bg-white rounded-xl border border-slate-200 shadow-lg py-1 min-w-40 z-50"
+                <ChevronDown className="h-4 w-4" />
+              </motion.span>
+            </button>
+          </div>
+
+          {/* Collapsible filter panel */}
+          <motion.div
+            initial={false}
+            animate={{ height: filtersOpen ? "auto" : 0, opacity: filtersOpen ? 1 : 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden sm:h-auto! sm:opacity-100!"
+          >
+            <div className="pb-3 pt-3 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-0">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                {/* Search input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search experiences, activities..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-slate-50 placeholder:text-slate-400"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* City + Filters — side by side on mobile, inline on sm+ */}
+                <div className="flex gap-2">
+                  {/* City picker */}
+                  <div className="relative flex-1 sm:flex-none" ref={cityRef}>
+                    <button
+                      onClick={() => setCityOpen(!cityOpen)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors sm:min-w-35",
+                        city
+                          ? "border-primary text-primary bg-primary/5"
+                          : "border-slate-200 text-slate-600 bg-slate-50 hover:border-slate-300"
+                      )}
+                    >
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{city || "All Cities"}</span>
+                      <ChevronDown className={cn("h-3.5 w-3.5 ml-auto shrink-0 transition-transform", cityOpen && "rotate-180")} />
+                    </button>
+                    <AnimatePresence>
+                      {cityOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 6 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full mt-1 left-0 bg-white rounded-xl border border-slate-200 shadow-lg py-1 min-w-40 z-50"
+                        >
+                          {CITIES.map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => {
+                                setCity(c === "All Cities" ? "" : c);
+                                setCityOpen(false);
+                              }}
+                              className={cn(
+                                "w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors",
+                                (c === "All Cities" ? !city : city === c)
+                                  ? "text-primary font-medium"
+                                  : "text-slate-700"
+                              )}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Filter toggle button */}
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors shrink-0",
+                      showFilters || activeFilterCount > 0
+                        ? "border-primary text-primary bg-primary/5"
+                        : "border-slate-200 text-slate-600 bg-slate-50 hover:border-slate-300"
+                    )}
                   >
-                    {CITIES.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => {
-                          setCity(c === "All Cities" ? "" : c);
-                          setCityOpen(false);
-                        }}
-                        className={cn(
-                          "w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors",
-                          (c === "All Cities" ? !city : city === c)
-                            ? "text-primary font-medium"
-                            : "text-slate-700"
-                        )}
-                      >
-                        {c}
-                      </button>
-                    ))}
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="hidden xs:inline">Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span className="h-4.5 min-w-4.5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Expanded filters (Duration + Price) */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-3 flex flex-wrap gap-4 sm:gap-6">
+                      {/* Duration */}
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Duration</p>
+                        <div className="flex flex-wrap gap-2">
+                          {DURATION_FILTERS.map((f) => (
+                            <button
+                              key={f.value}
+                              onClick={() => setDuration(duration === f.value ? "" : f.value)}
+                              className={cn(
+                                "px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                                duration === f.value
+                                  ? "border-primary bg-primary text-white"
+                                  : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
+                              )}
+                            >
+                              {f.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Max Price</p>
+                        <div className="flex flex-wrap gap-2">
+                          {PRICE_FILTERS.map((f) => (
+                            <button
+                              key={f.value}
+                              onClick={() => setMaxPrice(maxPrice === f.value ? "" : f.value)}
+                              className={cn(
+                                "px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                                maxPrice === f.value
+                                  ? "border-primary bg-primary text-white"
+                                  : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
+                              )}
+                            >
+                              {f.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Clear */}
+                      {activeFilterCount > 0 && (
+                        <div className="flex items-end">
+                          <button
+                            onClick={() => {
+                              setCity("");
+                              setDuration("");
+                              setMaxPrice("");
+                              setCategoryId("");
+                            }}
+                            className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                            Clear all
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Filter toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors",
-                showFilters || activeFilterCount > 0
-                  ? "border-primary text-primary bg-primary/5"
-                  : "border-slate-200 text-slate-600 bg-slate-50 hover:border-slate-300"
-              )}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="h-4.5 min-w-4.5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Expanded filters */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4 flex flex-wrap gap-6">
-                  {/* Duration */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Duration</p>
-                    <div className="flex flex-wrap gap-2">
-                      {DURATION_FILTERS.map((f) => (
-                        <button
-                          key={f.value}
-                          onClick={() => setDuration(duration === f.value ? "" : f.value)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
-                            duration === f.value
-                              ? "border-primary bg-primary text-white"
-                              : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
-                          )}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Max Price</p>
-                    <div className="flex flex-wrap gap-2">
-                      {PRICE_FILTERS.map((f) => (
-                        <button
-                          key={f.value}
-                          onClick={() => setMaxPrice(maxPrice === f.value ? "" : f.value)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
-                            maxPrice === f.value
-                              ? "border-primary bg-primary text-white"
-                              : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
-                          )}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Clear */}
-                  {activeFilterCount > 0 && (
-                    <div className="flex items-end">
-                      <button
-                        onClick={() => {
-                          setCity("");
-                          setDuration("");
-                          setMaxPrice("");
-                          setCategoryId("");
-                        }}
-                        className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                        Clear all
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 

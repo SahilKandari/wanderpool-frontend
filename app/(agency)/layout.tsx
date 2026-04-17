@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { AgencySidebar } from "@/components/layout/AgencySidebar";
 import { Topbar } from "@/components/layout/Topbar";
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet";
-import { AgencySidebar as MobileAgencySidebar } from "@/components/layout/AgencySidebar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export default function AgencyLayout({
   children,
@@ -22,8 +18,8 @@ export default function AgencyLayout({
 
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-60">
-          <MobileAgencySidebar />
+        <SheetContent side="left" className="p-0 w-64">
+          <AgencySidebar mobile onNavClick={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 

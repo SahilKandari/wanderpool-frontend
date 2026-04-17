@@ -151,7 +151,7 @@ export default function AdminAgencyDetailPage({
     return (
       <div className="space-y-6 max-w-5xl">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
         </div>
         <Skeleton className="h-64 rounded-xl" />
@@ -199,7 +199,7 @@ export default function AdminAgencyDetailPage({
           </p>
         </div>
         {/* Action buttons */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {agency.status !== "active" && (
             <Button
               size="sm"
@@ -267,7 +267,7 @@ export default function AdminAgencyDetailPage({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Email</p>
                   <p className="font-medium flex items-center gap-1.5 mt-0.5">
@@ -319,7 +319,7 @@ export default function AdminAgencyDetailPage({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Aadhaar Number</p>
                   <p className="font-medium mt-0.5 font-mono">{agency.aadhaar_number || "—"}</p>

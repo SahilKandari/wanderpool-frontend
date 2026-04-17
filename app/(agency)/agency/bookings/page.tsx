@@ -603,8 +603,56 @@ export default function AgencyBookingsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border bg-background">
+      {/* Mobile card list — visible below sm */}
+      <div className="block sm:hidden space-y-3">
+        {isLoading ? (
+          [...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-xl border bg-white p-4 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground text-sm">
+            {bookings.length === 0 ? "No bookings yet." : "No bookings match your filters."}
+          </div>
+        ) : (
+          filtered.map((b) => (
+            <div
+              key={b.id}
+              className="rounded-xl border border-slate-100 bg-white p-4 space-y-2 active:bg-slate-50"
+              onClick={() => setViewBookingId(b.id)}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-medium text-slate-500">{b.booking_code}</span>
+                <BookingStatusBadge status={b.status} />
+              </div>
+              <p className="font-semibold text-sm text-slate-900 truncate">{b.experience_title}</p>
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>{formatDate(b.slot_date)} · {b.slot_start_time}</span>
+                <span className="font-semibold text-slate-700">{paiseToCurrency(b.total_paise)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">{b.customer_name} · {b.participants} pax</p>
+                {canCancel(b.status) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); setCancelBookingTarget(b); }}
+                  >
+                    <Ban className="h-3 w-3 mr-1" />Cancel
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table — hidden below sm */}
+      <div className="hidden sm:block rounded-lg border bg-background overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

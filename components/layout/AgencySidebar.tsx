@@ -14,6 +14,7 @@ import {
   Clock,
   Star,
   ClipboardList,
+  Mountain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
@@ -40,20 +41,18 @@ const navItems: NavItem[] = [
   { label: "Schedule",         href: "/operator/schedule",   icon: Clock,           roles: ["operator"] },
 ];
 
-export function AgencySidebar() {
+export function AgencySidebar({ mobile = false, onNavClick }: { mobile?: boolean; onNavClick?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const role = user?.actorKind === "operator" ? "operator" : "agency";
   const visible = navItems.filter((i) => i.roles.includes(role as "agency" | "operator"));
 
   return (
-    <aside className="hidden lg:flex lg:flex-col w-64 border-r border-border bg-white">
+    <aside className={mobile ? "flex flex-col w-64 border-r border-border bg-white" : "hidden lg:flex lg:flex-col w-64 border-r border-border bg-white"}>
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 px-6 border-b border-border">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 text-white fill-current">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-          </svg>
+      <Link href="/" className="flex h-16 items-center gap-3 px-6 border-b border-border hover:bg-slate-50 transition-colors">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/30">
+          <Mountain className="h-4 w-4 text-white" />
         </div>
         <div>
           <p className="font-bold text-sm leading-none text-foreground">WanderPool</p>
@@ -61,7 +60,7 @@ export function AgencySidebar() {
             {role === "operator" ? "Guide Portal" : "Agency Portal"}
           </p>
         </div>
-      </div>
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
@@ -75,6 +74,7 @@ export function AgencySidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavClick}
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 active

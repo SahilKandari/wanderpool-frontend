@@ -220,52 +220,86 @@ function AdminUsersContent({
           }
         />
       ) : (
-        <div className="rounded-xl border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Added</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {admins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <UserCog className="h-4 w-4 text-primary" />
-                      </div>
-                      <span className="font-medium text-sm">{admin.name}</span>
+        <>
+          {/* Mobile card list — visible below sm */}
+          <div className="block sm:hidden space-y-3">
+            {admins.map((admin) => (
+              <div key={admin.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <UserCog className="h-4 w-4 text-primary" />
                     </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {admin.email}
-                  </TableCell>
-                  <TableCell>
-                    <RoleBadge role={admin.account_type} />
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(admin.created_at)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setRemoveTarget(admin)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm">{admin.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{admin.email}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setRemoveTarget(admin)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <RoleBadge role={admin.account_type} />
+                  <span className="text-xs text-muted-foreground">Added {formatDate(admin.created_at)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table — hidden below sm */}
+          <div className="hidden sm:block rounded-xl border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {admins.map((admin) => (
+                  <TableRow key={admin.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <UserCog className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium text-sm">{admin.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {admin.email}
+                    </TableCell>
+                    <TableCell>
+                      <RoleBadge role={admin.account_type} />
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(admin.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setRemoveTarget(admin)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {/* Add Admin dialog */}

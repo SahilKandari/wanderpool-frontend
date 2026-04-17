@@ -178,11 +178,11 @@ export default function AdminPayoutsPage() {
           <>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">From</Label>
-              <Input type="date" className="w-40" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+              <Input type="date" className="w-full sm:w-40" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">To</Label>
-              <Input type="date" className="w-40" value={customTo} onChange={e => setCustomTo(e.target.value)} />
+              <Input type="date" className="w-full sm:w-40" value={customTo} onChange={e => setCustomTo(e.target.value)} />
             </div>
           </>
         )}
@@ -190,7 +190,7 @@ export default function AdminPayoutsPage() {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Status</Label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -211,15 +211,63 @@ export default function AdminPayoutsPage() {
         )}
       </div>
 
-      {/* Table */}
+      {/* Mobile card list — visible below sm */}
+      <div className="block sm:hidden space-y-3 mb-4">
+        {isLoading ? (
+          [...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-xl border bg-white p-4 space-y-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
+          <EmptyState title="No payouts found" description="Payouts are created automatically after bookings complete." />
+        ) : (
+          filtered.map(payout => (
+            <div key={payout.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-semibold text-sm text-slate-900">{payout.agency_name}</p>
+                  <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                    <CalendarDays className="h-3 w-3" />
+                    <span>{formatDate(payout.period_start)} → {formatDate(payout.period_end)}</span>
+                  </div>
+                </div>
+                <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border capitalize shrink-0", statusStyle(payout.status))}>
+                  {statusIcon(payout.status)}
+                  {payout.status}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xl font-bold text-slate-900">{paiseToCurrency(payout.amount_paise)}</p>
+                <p className="text-xs text-slate-500">{payout.booking_count} booking{payout.booking_count !== 1 ? "s" : ""}</p>
+              </div>
+              {(payout.status === "pending" || payout.status === "processing") && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-full text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                  onClick={() => { setPayTarget(payout); setRefId(""); }}
+                >
+                  Mark Paid
+                </Button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table — hidden below sm */}
       {isLoading ? (
-        <div className="space-y-2">
+        <div className="hidden sm:block space-y-2">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState title="No payouts found" description="Payouts are created automatically after bookings complete." />
+        <div className="hidden sm:block">
+          <EmptyState title="No payouts found" description="Payouts are created automatically after bookings complete." />
+        </div>
       ) : (
-        <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="hidden sm:block rounded-xl border bg-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">

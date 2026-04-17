@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,6 +94,20 @@ export default function ExperienceDetailPage({
   const [selectedSlotId, setSelectedSlotId] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
   const [shareCopied, setShareCopied] = useState(false);
+  const [showMobileBook, setShowMobileBook] = useState(true);
+  const bookingCardRef = useRef<HTMLDivElement>(null);
+
+  // Hide the mobile fixed "Book Now" button when the booking card is in view
+  useEffect(() => {
+    const el = bookingCardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowMobileBook(!entry.isIntersecting),
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const { data: exp, isLoading, isError } = useQuery({
     queryKey: experienceKeys.detail(slug),
@@ -153,7 +167,7 @@ export default function ExperienceDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className="min-h-screen bg-white pt-16 pb-24 lg:pb-0">
       {/* Gallery */}
       <div className="relative h-[55vh] min-h-90 bg-slate-900 overflow-hidden">
         <AnimatePresence mode="wait">
@@ -473,7 +487,7 @@ export default function ExperienceDetailPage({
                   )}
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="max-h-120 overflow-y-auto space-y-4 pr-1">
                   {reviewsData.reviews.map((review) => (
                     <div
                       key={review.id}
@@ -567,7 +581,7 @@ export default function ExperienceDetailPage({
           </div>
 
           {/* Right — Booking card (sticky) */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1" ref={bookingCardRef}>
             <div className="sticky top-24">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -759,6 +773,38 @@ export default function ExperienceDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Mobile fixed Book Now button — hidden when booking card is in view */}
+      <AnimatePresence>
+        {showMobileBook && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="fixed bottom-0 inset-x-0 z-50 lg:hidden px-4 py-3 bg-white/95 backdrop-blur-sm border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+          >
+            <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
+              <div>
+                <p className="text-xs text-slate-500">from</p>
+                <p className="text-lg font-bold text-slate-900">
+                  ₹{price.toLocaleString("en-IN")}
+                  <span className="text-xs font-normal text-slate-400 ml-1">/ person</span>
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  bookingCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+              >
+                Book Now
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

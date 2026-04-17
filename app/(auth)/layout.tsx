@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Mountain } from "lucide-react";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,10 +14,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         <div className="relative">
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm shadow-md">
+              <Mountain className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold">WanderPool</span>
           </Link>
@@ -56,10 +55,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <Link href="/" className="flex lg:hidden items-center gap-2 mb-8 hover:opacity-80 transition-opacity">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/30">
+              <Mountain className="h-4 w-4 text-white" />
             </div>
             <span className="text-lg font-bold">WanderPool</span>
           </Link>
