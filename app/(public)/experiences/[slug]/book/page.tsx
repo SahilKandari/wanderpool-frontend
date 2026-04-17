@@ -72,6 +72,7 @@ export default function BookPage({
   const [dateFilter, setDateFilter] = useState("");
   const [paymentMode, setPaymentMode] = useState<"full" | "partial">("full");
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [partialEnabled, setPartialEnabled] = useState(true);
   const [commissionPct, setCommissionPct] = useState(13);
   const selectedSlotRef = useRef<HTMLButtonElement>(null);
@@ -491,10 +492,29 @@ export default function BookPage({
                 </p>
               </div>
 
+              <label className="mt-4 flex items-start gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-primary cursor-pointer"
+                />
+                <span className="text-xs text-slate-500 leading-relaxed group-hover:text-slate-700 transition-colors">
+                  I agree to the{" "}
+                  <Link href="/terms" target="_blank" className="text-primary hover:underline">
+                    Terms &amp; Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/refund-policy" target="_blank" className="text-primary hover:underline">
+                    Refund Policy
+                  </Link>
+                </span>
+              </label>
+
               <button
                 onClick={handlePay}
-                disabled={loading || !selectedSlot}
-                className="mt-5 w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                disabled={loading || !selectedSlot || !agreedToTerms}
+                className="mt-4 w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

@@ -195,7 +195,7 @@ function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
@@ -215,6 +215,18 @@ function Footer() {
                 { label: "For Operators", href: "/for-operators" },
                 { label: "Safety", href: "/safety" },
                 { label: "Contact", href: "/contact" },
+              ].map(l => (
+                <li key={l.href}><Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-white text-sm mb-4">Legal</p>
+            <ul className="space-y-2 text-sm">
+              {[
+                { label: "Privacy Policy", href: "/privacy-policy" },
+                { label: "Terms & Conditions", href: "/terms" },
+                { label: "Refund Policy", href: "/refund-policy" },
               ].map(l => (
                 <li key={l.href}><Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link></li>
               ))}
