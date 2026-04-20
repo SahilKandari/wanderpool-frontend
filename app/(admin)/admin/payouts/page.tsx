@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  CheckCircle2, Clock, IndianRupee, CalendarDays, X, Building2,
+  CheckCircle2, Clock, IndianRupee, CalendarDays, X, Building2, Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,25 +31,28 @@ import { cn } from "@/lib/utils";
 
 function payoutStatusStyle(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":    return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "pending": return "bg-amber-50 text-amber-700 border-amber-200";
-    case "not_due": return "bg-slate-50 text-slate-500 border-slate-200";
+    case "paid":           return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "pending":        return "bg-amber-50 text-amber-700 border-amber-200";
+    case "not_due":        return "bg-slate-50 text-slate-500 border-slate-200";
+    case "direct_payment": return "bg-blue-50 text-blue-600 border-blue-200";
   }
 }
 
 function payoutStatusLabel(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":    return "Paid";
-    case "pending": return "Awaiting Payout";
-    case "not_due": return "Activity Pending";
+    case "paid":           return "Paid";
+    case "pending":        return "Awaiting Payout";
+    case "not_due":        return "Activity Pending";
+    case "direct_payment": return "Direct Payment";
   }
 }
 
 function payoutStatusIcon(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":    return <CheckCircle2 className="h-3.5 w-3.5" />;
-    case "pending": return <Clock className="h-3.5 w-3.5" />;
-    case "not_due": return <CalendarDays className="h-3.5 w-3.5" />;
+    case "paid":           return <CheckCircle2 className="h-3.5 w-3.5" />;
+    case "pending":        return <Clock className="h-3.5 w-3.5" />;
+    case "not_due":        return <CalendarDays className="h-3.5 w-3.5" />;
+    case "direct_payment": return <Banknote className="h-3.5 w-3.5" />;
   }
 }
 
@@ -99,6 +102,9 @@ export default function AdminPayoutsPage() {
   const totalPaid = payouts
     .filter(p => p.payout_status === "paid")
     .reduce((s, p) => s + p.operator_payout_paise, 0);
+  const totalDirectPaid = payouts
+    .filter(p => p.payout_status === "direct_payment")
+    .reduce((s, p) => s + p.operator_payout_paise, 0);
   const pendingCount = payouts.filter(p => p.payout_status === "pending").length;
 
   const hasFilters = agencyFilter !== "all" || statusFilter !== "all" || fromDate || toDate;
@@ -115,11 +121,12 @@ export default function AdminPayoutsPage() {
       <PageHeader title="Payouts" description="Manage operator payout disbursements — per booking" />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Pending Amount", value: paiseToCurrency(totalPending), color: "text-amber-600", icon: Clock },
           { label: "Paid Out", value: paiseToCurrency(totalPaid), color: "text-emerald-600", icon: CheckCircle2 },
           { label: "Awaiting Action", value: `${pendingCount} booking${pendingCount !== 1 ? "s" : ""}`, color: "text-foreground", icon: IndianRupee },
+          { label: "Direct Paid", value: paiseToCurrency(totalDirectPaid), color: "text-blue-600", icon: Banknote },
         ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} className="bg-card rounded-xl border p-5">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -127,6 +134,9 @@ export default function AdminPayoutsPage() {
               <span className="text-sm">{label}</span>
             </div>
             <p className={cn("text-2xl font-bold", color)}>{value}</p>
+            {label === "Direct Paid" && (
+              <p className="text-xs text-muted-foreground mt-1">Collected directly by agency</p>
+            )}
           </div>
         ))}
       </div>
@@ -287,8 +297,15 @@ export default function AdminPayoutsPage() {
                       <span className="text-xs text-blue-600 ml-1">(partial)</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-semibold text-sm text-emerald-700">
-                    {paiseToCurrency(p.operator_payout_paise)}
+                  <TableCell className="font-semibold text-sm">
+                    {p.payout_status === "direct_payment" ? (
+                      <span className="text-blue-600">
+                        {paiseToCurrency(p.operator_payout_paise)}
+                        <span className="text-xs font-normal text-muted-foreground ml-1">(direct)</span>
+                      </span>
+                    ) : (
+                      <span className="text-emerald-700">{paiseToCurrency(p.operator_payout_paise)}</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs capitalize text-muted-foreground">
                     {p.payment_mode}

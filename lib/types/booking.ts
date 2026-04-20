@@ -76,5 +76,5 @@ export interface BookingPayout {
   payout_reference: string | null;
   activity_completed_at: string | null;
   created_at: string;
-  payout_status: "pending" | "paid" | "not_due";
+  payout_status: "pending" | "paid" | "not_due" | "direct_payment";
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Clock, CheckCircle2, IndianRupee, CalendarDays, X,
+  Clock, CheckCircle2, IndianRupee, CalendarDays, X, Banknote,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -34,25 +34,28 @@ import { cn } from "@/lib/utils";
 
 function payoutStatusStyle(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":    return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "pending": return "bg-amber-50 text-amber-700 border-amber-200";
-    case "not_due": return "bg-slate-50 text-slate-500 border-slate-200";
+    case "paid":           return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "pending":        return "bg-amber-50 text-amber-700 border-amber-200";
+    case "not_due":        return "bg-slate-50 text-slate-500 border-slate-200";
+    case "direct_payment": return "bg-blue-50 text-blue-600 border-blue-200";
   }
 }
 
 function payoutStatusLabel(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":    return "Paid";
-    case "pending": return "Awaiting Payout";
-    case "not_due": return "Activity Pending";
+    case "paid":           return "Paid";
+    case "pending":        return "Awaiting Payout";
+    case "not_due":        return "Activity Pending";
+    case "direct_payment": return "Direct Payment";
   }
 }
 
 function payoutStatusIcon(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":    return <CheckCircle2 className="h-3.5 w-3.5" />;
-    case "pending": return <Clock className="h-3.5 w-3.5" />;
-    case "not_due": return <CalendarDays className="h-3.5 w-3.5" />;
+    case "paid":           return <CheckCircle2 className="h-3.5 w-3.5" />;
+    case "pending":        return <Clock className="h-3.5 w-3.5" />;
+    case "not_due":        return <CalendarDays className="h-3.5 w-3.5" />;
+    case "direct_payment": return <Banknote className="h-3.5 w-3.5" />;
   }
 }
 
@@ -74,6 +77,10 @@ export default function AgencyPayoutsPage() {
     .filter(p => p.payout_status === "pending")
     .reduce((s, p) => s + p.operator_payout_paise, 0);
 
+  const totalDirectReceived = payouts
+    .filter(p => p.payout_status === "direct_payment")
+    .reduce((s, p) => s + p.operator_payout_paise, 0);
+
   const hasFilters = statusFilter !== "all" || fromDate || toDate;
 
   const clearFilters = () => {
@@ -90,7 +97,7 @@ export default function AgencyPayoutsPage() {
       />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <IndianRupee className="h-4 w-4" />
@@ -115,6 +122,17 @@ export default function AgencyPayoutsPage() {
           <p className="text-xs text-muted-foreground mt-1">
             {payouts.filter(p => p.payout_status === "pending").length} completed bookings awaiting transfer
           </p>
+        </div>
+
+        <div className="bg-card rounded-xl border p-5">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
+            <Banknote className="h-4 w-4" />
+            <span className="text-sm font-medium">Direct Received</span>
+          </div>
+          {isLoading ? <Skeleton className="h-7 w-28" /> : (
+            <p className="text-2xl font-bold text-blue-600">{paiseToCurrency(totalDirectReceived)}</p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">Collected directly from customer</p>
         </div>
       </div>
 
@@ -190,7 +208,12 @@ export default function AgencyPayoutsPage() {
               </div>
               <p className="text-sm font-medium text-slate-900 truncate">{p.experience_title}</p>
               <div className="flex items-center justify-between">
-                <p className="text-xl font-bold text-slate-900">{paiseToCurrency(p.operator_payout_paise)}</p>
+                <p className={cn("text-xl font-bold", p.payout_status === "direct_payment" ? "text-blue-600" : "text-slate-900")}>
+                  {paiseToCurrency(p.operator_payout_paise)}
+                  {p.payout_status === "direct_payment" && (
+                    <span className="text-xs font-normal text-muted-foreground ml-1">(direct)</span>
+                  )}
+                </p>
                 <div className="text-right text-xs text-slate-500">
                   <p>{formatDate(p.slot_date)}</p>
                   <p className="capitalize">{p.payment_mode} payment</p>
@@ -249,8 +272,15 @@ export default function AgencyPayoutsPage() {
                       <span className="text-xs text-blue-600 ml-1">(partial)</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-semibold text-sm text-emerald-700">
-                    {paiseToCurrency(p.operator_payout_paise)}
+                  <TableCell className="font-semibold text-sm">
+                    {p.payout_status === "direct_payment" ? (
+                      <span className="text-blue-600">
+                        {paiseToCurrency(p.operator_payout_paise)}
+                        <span className="text-xs font-normal text-muted-foreground ml-1">(direct)</span>
+                      </span>
+                    ) : (
+                      <span className="text-emerald-700">{paiseToCurrency(p.operator_payout_paise)}</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <span className="capitalize text-xs text-muted-foreground">{p.payment_mode}</span>
@@ -276,7 +306,7 @@ export default function AgencyPayoutsPage() {
 
       <p className="text-xs text-muted-foreground mt-4 text-center">
         WanderPool retains a 12–15% platform fee. You receive 85–88% of each booking value.
-        The platform fee is non-refundable. Partial payment bookings show the prorated payout amount.
+        The platform fee is non-refundable. Partial payment bookings are collected directly from the customer — WanderPool does not disburse a separate payout for these.
       </p>
     </div>
   );
