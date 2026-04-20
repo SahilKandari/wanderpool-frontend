@@ -95,10 +95,6 @@ export default function ExperienceDetailPage({
   const { user } = useAuth();
   const [imgIndex, setImgIndex] = useState(0);
   const [participants, setParticipants] = useState(2);
-  // Reset to min_participants once experience loads
-  useEffect(() => {
-    if (exp?.min_participants) setParticipants(exp.min_participants);
-  }, [exp?.min_participants]);
   const [bookingDate, setBookingDate] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
@@ -123,6 +119,16 @@ export default function ExperienceDetailPage({
     queryKey: experienceKeys.detail(slug),
     queryFn: () => getExperienceBySlug(slug),
   });
+
+  // Reset to min_participants once experience loads
+  useEffect(() => {
+    if (exp?.min_participants) setParticipants(exp.min_participants);
+  }, [exp?.min_participants]);
+
+  // Reset to min_participants once experience loads
+  useEffect(() => {
+    if (exp?.min_participants) setParticipants(exp.min_participants);
+  }, [exp?.min_participants]);
 
   // Hook needs exp.id — safe to call unconditionally (disabled when id is empty)
   const { isFavourited, toggle: toggleFavourite, isLoading: favLoading } =
