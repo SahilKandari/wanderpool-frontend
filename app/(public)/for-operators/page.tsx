@@ -12,7 +12,10 @@ import {
   BarChart3,
 } from "lucide-react";
 
-export const metadata = { title: "For Operators — WanderPool" };
+export const metadata = {
+  title: "List Your Adventure Business",
+  description: "Join WanderPool as a verified operator. List your rafting, trekking, or adventure experiences — get bookings, manage slots, and receive payouts within 3 days of activity completion.",
+};
 
 export default function ForOperatorsPage() {
   return (

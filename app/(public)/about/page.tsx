@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Mountain, Target, Heart, Users, MapPin, ArrowRight, CheckCircle2 } from "lucide-react";
 
-export const metadata = { title: "About Us — WanderPool" };
+export const metadata = {
+  title: "About Us",
+  description: "WanderPool is India's adventure experience marketplace. We connect travelers with verified local operators for rafting, trekking, paragliding and more in Uttarakhand.",
+};
 
 export default function AboutPage() {
   return (

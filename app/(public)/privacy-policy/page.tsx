@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Privacy Policy — WanderPool" };
+export const metadata = { title: "Privacy Policy" };
 
 export default function PrivacyPolicyPage() {
   return (

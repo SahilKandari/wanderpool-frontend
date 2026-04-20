@@ -1,0 +1,26 @@
+# WanderPool
+> Adventure experience marketplace for India — Uttarakhand first
+
+WanderPool lets travelers book verified adventure experiences (river rafting, trekking, paragliding,
+camping, yoga retreats) with local operators in India, starting with Uttarakhand (Rishikesh, Haridwar,
+Mussoorie).
+
+## Key pages
+- https://wanderpool.com — Home, browse featured experiences
+- https://wanderpool.com/experiences — Browse all experiences with filters
+- https://wanderpool.com/for-operators — List your adventure business on WanderPool
+- https://wanderpool.com/about — About WanderPool
+- https://wanderpool.com/safety — Safety standards and how we vet operators
+- https://wanderpool.com/contact — Contact support
+
+## What we offer
+- Instant online booking with Razorpay
+- Verified operators (ID + certifications + video call)
+- 3 cancellation policy tiers — free cancel up to 48 hours available
+- Post-activity review system (verified buyers only)
+- WhatsApp + email booking confirmations
+
+## Business
+- Commission: 12–15% per booking; operators receive 85–88%
+- Primary region: Uttarakhand (Rishikesh, Haridwar, Mussoorie)
+- Contact: support@wanderpool.com

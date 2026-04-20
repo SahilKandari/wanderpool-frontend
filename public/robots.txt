@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /agency/
+Disallow: /operator/
+Disallow: /admin/
+Disallow: /customer/
+Disallow: /bookings/confirmation
+
+Sitemap: https://wanderpool.com/sitemap.xml

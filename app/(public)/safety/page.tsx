@@ -12,7 +12,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export const metadata = { title: "Safety — WanderPool" };
+export const metadata = {
+  title: "Safety Standards",
+  description: "WanderPool verifies every operator with ID checks, safety certifications, photo verification, and a video call. Our quality system auto-flags and removes unsafe operators.",
+};
 
 export default function SafetyPage() {
   return (

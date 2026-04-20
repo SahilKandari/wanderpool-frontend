@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
-export const metadata = { title: "Refund Policy — WanderPool" };
+export const metadata = { title: "Refund Policy" };
 
 export default function RefundPolicyPage() {
   return (

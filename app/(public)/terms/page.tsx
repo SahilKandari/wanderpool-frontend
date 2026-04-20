@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Terms & Conditions — WanderPool" };
+export const metadata = { title: "Terms & Conditions" };
 
 export default function TermsPage() {
   return (
