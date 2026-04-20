@@ -147,6 +147,7 @@ function BookingDetailDialog({
   const hasChanged = dropdownValue !== (currentOperatorId || "unassigned");
   const activityStarted = !!booking.activity_started_at;
   const cashPending =
+    booking.status !== "cancelled" &&
     booking.payment_mode === "partial" &&
     (booking.amount_paid_paise ?? 0) < booking.total_paise;
 

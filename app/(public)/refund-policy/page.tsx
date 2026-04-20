@@ -26,6 +26,22 @@ export default function RefundPolicyPage() {
             Every experience on WanderPool operates under one of three cancellation policies. The applicable policy is clearly shown on the experience page and at checkout before you pay.
           </p>
 
+          {/* Non-refundable booking fee notice */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-slate-500 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">Non-refundable booking fee (12–15%)</h3>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  Regardless of the cancellation policy, WanderPool retains a <strong>non-refundable booking fee of 12–15%</strong> of the activity price on all customer-initiated cancellations. This fee covers payment processing, platform costs, and service charges.
+                </p>
+                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                  The refund percentages below apply to the <strong>remaining amount after deducting the booking fee</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4">
             {/* Tier 1 */}
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
@@ -34,7 +50,7 @@ export default function RefundPolicyPage() {
                 <h3 className="font-semibold text-slate-900">Free cancellation — up to 48 hours before</h3>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed ml-7">
-                Cancel at least 48 hours before the scheduled activity start time and receive a <strong>full refund</strong> of the amount you paid.
+                Cancel at least 48 hours before the scheduled activity start time and receive a refund of the full amount you paid, <strong>minus the non-refundable booking fee (12–15%)</strong>.
               </p>
               <p className="text-xs text-slate-500 mt-2 ml-7">Cancellations less than 48 hours before the start time receive no refund.</p>
             </div>
@@ -46,7 +62,7 @@ export default function RefundPolicyPage() {
                 <h3 className="font-semibold text-slate-900">50% refund — up to 24 hours before</h3>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed ml-7">
-                Cancel at least 24 hours before the scheduled start time and receive a <strong>50% refund</strong> of the amount you paid.
+                Cancel at least 24 hours before the scheduled start time and receive a <strong>50% refund</strong> of the amount paid after deducting the non-refundable booking fee (12–15%).
               </p>
               <p className="text-xs text-slate-500 mt-2 ml-7">Cancellations less than 24 hours before the start time receive no refund.</p>
             </div>
@@ -58,7 +74,7 @@ export default function RefundPolicyPage() {
                 <h3 className="font-semibold text-slate-900">Non-refundable</h3>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed ml-7">
-                This experience does not offer refunds for cancellations. The booking fee is non-refundable once payment is confirmed.
+                This experience does not offer refunds for cancellations. The entire amount paid is non-refundable once payment is confirmed.
               </p>
             </div>
           </div>
@@ -100,12 +116,12 @@ export default function RefundPolicyPage() {
 
         {/* Operator no-show */}
         <section>
-          <h2 className="text-xl font-semibold text-slate-900 mb-3">Operator cancellation or no-show</h2>
+          <h2 className="text-xl font-semibold text-slate-900 mb-3">Operator or WanderPool cancellation</h2>
           <p className="text-slate-600 leading-relaxed">
-            If an Operator cancels your booking or fails to show up, WanderPool will issue a <strong>full refund</strong> of the amount you paid, regardless of the experience&apos;s cancellation policy. Refunds in this case are processed within <strong>24 hours</strong> of the confirmed no-show or cancellation.
+            If an operator cancels your booking, fails to show up, or WanderPool cancels the booking on your behalf (e.g. force majeure, safety reasons), you will receive a <strong>complete refund of the full amount paid — including the booking fee</strong>, regardless of the experience&apos;s cancellation policy. This exception does not apply to customer-initiated cancellations.
           </p>
           <p className="text-slate-600 leading-relaxed mt-3">
-            Please contact <a href="mailto:support@wanderpool.com" className="text-primary hover:underline">support@wanderpool.com</a> immediately if your Operator does not show up. Do not leave the meeting point without notifying us.
+            Operator no-show refunds are processed within <strong>24 hours</strong>. Please contact <a href="mailto:support@wanderpool.com" className="text-primary hover:underline">support@wanderpool.com</a> immediately if your operator does not show up. Do not leave the meeting point without notifying us first.
           </p>
         </section>
 
@@ -130,9 +146,15 @@ export default function RefundPolicyPage() {
 
         {/* Partial payment */}
         <section>
-          <h2 className="text-xl font-semibold text-slate-900 mb-3">Partial payment (booking fee) refunds</h2>
+          <h2 className="text-xl font-semibold text-slate-900 mb-3">Partial payment (booking fee only)</h2>
           <p className="text-slate-600 leading-relaxed">
-            If you paid only the booking fee (partial payment option), the refund amount is calculated as a percentage of the booking fee paid — not the full activity price. The remaining balance due at the venue is not collected by WanderPool and is not subject to our refund process.
+            If you chose the partial payment option (paying only the booking fee upfront), the amount you paid <strong>equals the non-refundable booking fee</strong>. This means customer-initiated cancellations will result in <strong>no refund</strong> regardless of the experience&apos;s cancellation policy — since the booking fee is always retained by WanderPool.
+          </p>
+          <p className="text-slate-600 leading-relaxed mt-3">
+            However, if the operator or WanderPool cancels the booking, the full booking fee paid will be refunded to you.
+          </p>
+          <p className="text-slate-600 leading-relaxed mt-3">
+            The remaining balance due at the venue is paid directly to the guide in cash and is not handled by WanderPool.
           </p>
         </section>
 

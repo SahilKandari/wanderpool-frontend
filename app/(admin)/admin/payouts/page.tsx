@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  CheckCircle2, Clock, TrendingUp, XCircle,
-  IndianRupee, CalendarDays, Search, CreditCard, X, Building2,
+  CheckCircle2, Clock, IndianRupee, CalendarDays, X, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,80 +23,69 @@ import {
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { payoutKeys, adminListPayouts, adminMarkPayoutPaid } from "@/lib/api/payouts";
+import { adminListAgencies } from "@/lib/api/admin";
 import { paiseToCurrency } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/date";
-import type { Payout } from "@/lib/types/booking";
+import type { BookingPayout } from "@/lib/types/booking";
 import { cn } from "@/lib/utils";
 
-function getPresetRange(preset: string): { from: string; to: string } | null {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const day = now.getDay();
-  const diffToMon = day === 0 ? 6 : day - 1;
-  const thisMonday = new Date(now); thisMonday.setDate(now.getDate() - diffToMon); thisMonday.setHours(0,0,0,0);
-  const thisSunday = new Date(thisMonday); thisSunday.setDate(thisMonday.getDate() + 6);
-  if (preset === "this_week") {
-    return { from: fmt(thisMonday), to: fmt(thisSunday) };
-  }
-  if (preset === "last_week") {
-    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() - 7);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    return { from: fmt(mon), to: fmt(sun) };
-  }
-  if (preset === "last_4_weeks") {
-    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() - 21);
-    return { from: fmt(mon), to: fmt(thisSunday) };
-  }
-  return null;
-}
-
-function statusStyle(status: Payout["status"]) {
+function payoutStatusStyle(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":       return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "pending":    return "bg-amber-50 text-amber-700 border-amber-200";
-    case "processing": return "bg-blue-50 text-blue-700 border-blue-200";
-    case "failed":     return "bg-red-50 text-red-700 border-red-200";
+    case "paid":    return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "pending": return "bg-amber-50 text-amber-700 border-amber-200";
+    case "not_due": return "bg-slate-50 text-slate-500 border-slate-200";
   }
 }
 
-function statusIcon(status: Payout["status"]) {
+function payoutStatusLabel(status: BookingPayout["payout_status"]) {
   switch (status) {
-    case "paid":       return <CheckCircle2 className="h-3.5 w-3.5" />;
-    case "pending":    return <Clock className="h-3.5 w-3.5" />;
-    case "processing": return <TrendingUp className="h-3.5 w-3.5" />;
-    case "failed":     return <XCircle className="h-3.5 w-3.5" />;
+    case "paid":    return "Paid";
+    case "pending": return "Awaiting Payout";
+    case "not_due": return "Activity Pending";
+  }
+}
+
+function payoutStatusIcon(status: BookingPayout["payout_status"]) {
+  switch (status) {
+    case "paid":    return <CheckCircle2 className="h-3.5 w-3.5" />;
+    case "pending": return <Clock className="h-3.5 w-3.5" />;
+    case "not_due": return <CalendarDays className="h-3.5 w-3.5" />;
   }
 }
 
 export default function AdminPayoutsPage() {
   const qc = useQueryClient();
+  const [agencyFilter, setAgencyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [search, setSearch] = useState("");
-  const [preset, setPreset] = useState("all_time");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
-  const [payTarget, setPayTarget] = useState<Payout | null>(null);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [payTarget, setPayTarget] = useState<BookingPayout | null>(null);
   const [refId, setRefId] = useState("");
 
-  const activeRange = preset === "custom"
-    ? (customFrom && customTo ? { from: customFrom, to: customTo } : null)
-    : preset !== "all_time" ? getPresetRange(preset) : null;
+  const { data: agencies = [] } = useQuery({
+    queryKey: ["admin", "agencies", "dropdown"],
+    queryFn: () => adminListAgencies(),
+  });
 
   const { data: payouts = [], isLoading } = useQuery({
-    queryKey: payoutKeys.adminList(activeRange?.from, activeRange?.to),
-    queryFn: () => adminListPayouts(activeRange?.from, activeRange?.to),
+    queryKey: payoutKeys.adminList(
+      agencyFilter !== "all" ? agencyFilter : undefined,
+      statusFilter,
+      fromDate,
+      toDate,
+    ),
+    queryFn: () => adminListPayouts(
+      agencyFilter !== "all" ? agencyFilter : undefined,
+      statusFilter,
+      fromDate,
+      toDate,
+    ),
   });
 
   const markPaidMutation = useMutation({
-    mutationFn: (p: Payout) => adminMarkPayoutPaid({
-      agency_id: p.agency_id,
-      period_start: p.period_start.slice(0, 10),
-      period_end: p.period_end.slice(0, 10),
-      reference_id: refId.trim(),
-    }),
-    onSuccess: (data) => {
-      toast.success(`Payout marked as paid — ${data.bookings_updated} booking(s) updated`);
+    mutationFn: (p: BookingPayout) => adminMarkPayoutPaid(p.id, refId.trim()),
+    onSuccess: () => {
+      toast.success("Payout marked as paid");
       qc.invalidateQueries({ queryKey: payoutKeys.all });
       setPayTarget(null);
       setRefId("");
@@ -105,31 +93,33 @@ export default function AdminPayoutsPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const filtered = payouts.filter(p => {
-    if (statusFilter !== "all" && p.status !== statusFilter) return false;
-    const q = search.toLowerCase();
-    if (q && !p.agency_name.toLowerCase().includes(q) &&
-        !p.agency_id.toLowerCase().includes(q) &&
-        !(p.reference_id ?? "").toLowerCase().includes(q)) return false;
-    return true;
-  });
+  const totalPending = payouts
+    .filter(p => p.payout_status === "pending")
+    .reduce((s, p) => s + p.operator_payout_paise, 0);
+  const totalPaid = payouts
+    .filter(p => p.payout_status === "paid")
+    .reduce((s, p) => s + p.operator_payout_paise, 0);
+  const pendingCount = payouts.filter(p => p.payout_status === "pending").length;
 
-  const totalPending = payouts.filter(p => p.status === "pending" || p.status === "processing")
-    .reduce((s, p) => s + p.amount_paise, 0);
-  const totalPaid = payouts.filter(p => p.status === "paid")
-    .reduce((s, p) => s + p.amount_paise, 0);
-  const pendingCount = payouts.filter(p => p.status === "pending").length;
+  const hasFilters = agencyFilter !== "all" || statusFilter !== "all" || fromDate || toDate;
+
+  const clearFilters = () => {
+    setAgencyFilter("all");
+    setStatusFilter("all");
+    setFromDate("");
+    setToDate("");
+  };
 
   return (
     <div>
-      <PageHeader title="Payouts" description="Manage operator payout disbursements" />
+      <PageHeader title="Payouts" description="Manage operator payout disbursements — per booking" />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: "Pending Amount", value: paiseToCurrency(totalPending), color: "text-amber-600", icon: Clock },
-          { label: "Paid Out (All Time)", value: paiseToCurrency(totalPaid), color: "text-emerald-600", icon: CheckCircle2 },
-          { label: "Awaiting Action", value: `${pendingCount} payouts`, color: "text-foreground", icon: IndianRupee },
+          { label: "Paid Out", value: paiseToCurrency(totalPaid), color: "text-emerald-600", icon: CheckCircle2 },
+          { label: "Awaiting Action", value: `${pendingCount} booking${pendingCount !== 1 ? "s" : ""}`, color: "text-foreground", icon: IndianRupee },
         ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} className="bg-card rounded-xl border p-5">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -144,74 +134,64 @@ export default function AdminPayoutsPage() {
       {pendingCount > 0 && (
         <div className="mb-5 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
           <Clock className="h-4 w-4 shrink-0" />
-          <span><strong>{pendingCount}</strong> pending payout{pendingCount !== 1 ? "s" : ""} need to be processed and marked as paid.</span>
+          <span>
+            <strong>{pendingCount}</strong> completed booking{pendingCount !== 1 ? "s" : ""} pending payout — mark each as paid after bank transfer.
+          </span>
         </div>
       )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3 mb-5">
-        <div className="relative flex-1 min-w-48 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search agency or reference…" className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Period</Label>
-          <Select value={preset} onValueChange={(v) => {
-            setPreset(v);
-            if (v !== "custom") { setCustomFrom(""); setCustomTo(""); }
-          }}>
-            <SelectTrigger className="w-44">
-              <SelectValue />
+          <Label className="text-xs text-muted-foreground">Agency</Label>
+          <Select value={agencyFilter} onValueChange={setAgencyFilter}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="All Agencies" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all_time">All Time</SelectItem>
-              <SelectItem value="this_week">This Week</SelectItem>
-              <SelectItem value="last_week">Last Week</SelectItem>
-              <SelectItem value="last_4_weeks">Last 4 Weeks</SelectItem>
-              <SelectItem value="custom">Custom Range</SelectItem>
+              <SelectItem value="all">All Agencies</SelectItem>
+              {agencies.map(a => (
+                <SelectItem key={a.id} value={a.id}>{a.business_name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
-
-        {preset === "custom" && (
-          <>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">From</Label>
-              <Input type="date" className="w-full sm:w-40" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">To</Label>
-              <Input type="date" className="w-full sm:w-40" value={customTo} onChange={e => setCustomTo(e.target.value)} />
-            </div>
-          </>
-        )}
 
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Status</Label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Awaiting Payout</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {(preset !== "all_time" || statusFilter !== "all" || search) && (
-          <Button variant="ghost" size="sm" className="self-end text-muted-foreground"
-            onClick={() => { setPreset("all_time"); setStatusFilter("all"); setSearch(""); setCustomFrom(""); setCustomTo(""); }}>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">From</Label>
+          <Input type="date" className="w-40" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">To</Label>
+          <Input type="date" className="w-40" value={toDate} onChange={e => setToDate(e.target.value)} />
+        </div>
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" className="self-end text-muted-foreground" onClick={clearFilters}>
             <X className="h-3.5 w-3.5 mr-1" /> Clear
           </Button>
         )}
+
+        <span className="text-sm text-muted-foreground ml-auto self-end">
+          {payouts.length} booking{payouts.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
-      {/* Mobile card list — visible below sm */}
+      {/* Mobile cards */}
       <div className="block sm:hidden space-y-3 mb-4">
         {isLoading ? (
           [...Array(4)].map((_, i) => (
@@ -220,34 +200,34 @@ export default function AdminPayoutsPage() {
               <Skeleton className="h-4 w-32" />
             </div>
           ))
-        ) : filtered.length === 0 ? (
-          <EmptyState title="No payouts found" description="Payouts are created automatically after bookings complete." />
+        ) : payouts.length === 0 ? (
+          <EmptyState title="No payouts found" description="Payouts appear here after bookings are completed." />
         ) : (
-          filtered.map(payout => (
-            <div key={payout.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
+          payouts.map(p => (
+            <div key={p.id} className="rounded-xl border border-slate-100 bg-white p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-sm text-slate-900">{payout.agency_name}</p>
-                  <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                    <CalendarDays className="h-3 w-3" />
-                    <span>{formatDate(payout.period_start)} → {formatDate(payout.period_end)}</span>
-                  </div>
+                  <p className="font-semibold text-sm text-slate-900">{p.agency_name}</p>
+                  <p className="text-xs text-slate-500 font-mono">{p.booking_ref}</p>
                 </div>
-                <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border capitalize shrink-0", statusStyle(payout.status))}>
-                  {statusIcon(payout.status)}
-                  {payout.status}
+                <span className={cn(
+                  "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border shrink-0",
+                  payoutStatusStyle(p.payout_status)
+                )}>
+                  {payoutStatusIcon(p.payout_status)}
+                  {payoutStatusLabel(p.payout_status)}
                 </span>
               </div>
+              <p className="text-sm truncate text-slate-700">{p.experience_title}</p>
               <div className="flex items-center justify-between">
-                <p className="text-xl font-bold text-slate-900">{paiseToCurrency(payout.amount_paise)}</p>
-                <p className="text-xs text-slate-500">{payout.booking_count} booking{payout.booking_count !== 1 ? "s" : ""}</p>
+                <p className="text-xl font-bold text-slate-900">{paiseToCurrency(p.operator_payout_paise)}</p>
+                <p className="text-xs text-slate-500">{formatDate(p.slot_date)}</p>
               </div>
-              {(payout.status === "pending" || payout.status === "processing") && (
+              {p.payout_status === "pending" && (
                 <Button
-                  size="sm"
-                  variant="outline"
+                  size="sm" variant="outline"
                   className="h-8 w-full text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                  onClick={() => { setPayTarget(payout); setRefId(""); }}
+                  onClick={() => { setPayTarget(p); setRefId(""); }}
                 >
                   Mark Paid
                 </Button>
@@ -257,14 +237,14 @@ export default function AdminPayoutsPage() {
         )}
       </div>
 
-      {/* Desktop table — hidden below sm */}
+      {/* Desktop table */}
       {isLoading ? (
         <div className="hidden sm:block space-y-2">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : payouts.length === 0 ? (
         <div className="hidden sm:block">
-          <EmptyState title="No payouts found" description="Payouts are created automatically after bookings complete." />
+          <EmptyState title="No payouts found" description="Payouts appear here after bookings are completed." />
         </div>
       ) : (
         <div className="hidden sm:block rounded-xl border bg-card overflow-x-auto">
@@ -272,66 +252,65 @@ export default function AdminPayoutsPage() {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>Agency</TableHead>
-                <TableHead>Week (Activity Date)</TableHead>
-                <TableHead className="text-center">Bookings</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Breakdown</TableHead>
+                <TableHead>Booking Ref</TableHead>
+                <TableHead>Experience</TableHead>
+                <TableHead>Activity Date</TableHead>
+                <TableHead>Customer Paid</TableHead>
+                <TableHead>Agency Payout</TableHead>
+                <TableHead>Mode</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Reference</TableHead>
-                <TableHead>Paid Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(payout => (
-                <TableRow key={payout.id}>
+              {payouts.map(p => (
+                <TableRow key={p.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium">{payout.agency_name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{payout.agency_id.slice(0, 8)}…</p>
-                      </div>
+                      <span className="text-sm font-medium">{p.agency_name}</span>
                     </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {p.booking_ref}
+                  </TableCell>
+                  <TableCell className="text-sm max-w-40 truncate">
+                    {p.experience_title}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <CalendarDays className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span>{formatDate(payout.period_start)} → {formatDate(payout.period_end)}</span>
-                    </div>
+                    {formatDate(p.slot_date)}
                   </TableCell>
-                  <TableCell className="text-center text-sm">{payout.booking_count}</TableCell>
-                  <TableCell className="font-semibold text-sm">{paiseToCurrency(payout.amount_paise)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {payout.partial_payment_paise > 0 ? (
-                      <div className="space-y-0.5">
-                        <p>Full: {paiseToCurrency(payout.full_payment_paise)}</p>
-                        <p className="text-blue-600">Partial: {paiseToCurrency(payout.partial_payment_paise)}</p>
-                      </div>
-                    ) : "—"}
+                  <TableCell className="text-sm">
+                    {paiseToCurrency(p.amount_paid_paise)}
+                    {p.payment_mode === "partial" && (
+                      <span className="text-xs text-blue-600 ml-1">(partial)</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-semibold text-sm text-emerald-700">
+                    {paiseToCurrency(p.operator_payout_paise)}
+                  </TableCell>
+                  <TableCell className="text-xs capitalize text-muted-foreground">
+                    {p.payment_mode}
                   </TableCell>
                   <TableCell>
                     <span className={cn(
-                      "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border capitalize",
-                      statusStyle(payout.status)
+                      "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border",
+                      payoutStatusStyle(p.payout_status)
                     )}>
-                      {statusIcon(payout.status)}
-                      {payout.status}
+                      {payoutStatusIcon(p.payout_status)}
+                      {payoutStatusLabel(p.payout_status)}
                     </span>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {payout.reference_id ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {payout.paid_at ? formatDate(payout.paid_at) : "—"}
+                    {p.payout_reference ?? "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    {(payout.status === "pending" || payout.status === "processing") && (
+                    {p.payout_status === "pending" && (
                       <Button
-                        size="sm"
-                        variant="outline"
+                        size="sm" variant="outline"
                         className="h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => { setPayTarget(payout); setRefId(""); }}
+                        onClick={() => { setPayTarget(p); setRefId(""); }}
                       >
                         Mark Paid
                       </Button>
@@ -351,26 +330,23 @@ export default function AdminPayoutsPage() {
             <DialogTitle>Mark Payout as Paid</DialogTitle>
             <DialogDescription>
               Confirm you have transferred{" "}
-              <strong>{payTarget ? paiseToCurrency(payTarget.amount_paise) : ""}</strong>{" "}
-              to <strong>{payTarget?.agency_name}</strong> for the period{" "}
-              {payTarget ? `${formatDate(payTarget.period_start)} – ${formatDate(payTarget.period_end)}` : ""}.
+              <strong>{payTarget ? paiseToCurrency(payTarget.operator_payout_paise) : ""}</strong>{" "}
+              to <strong>{payTarget?.agency_name}</strong> for booking{" "}
+              <strong>{payTarget?.booking_ref}</strong> ({payTarget?.experience_title}).
             </DialogDescription>
           </DialogHeader>
           <div className="py-2 space-y-1.5">
-            <Label>Bank Transfer Reference ID <span className="text-destructive">*</span></Label>
+            <Label>Bank Transfer Reference ID</Label>
             <Input
               placeholder="e.g. NEFT/IMPS transaction ID"
               value={refId}
               onChange={e => setRefId(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
-              This reference is stored against all {payTarget?.booking_count} booking(s) in this period.
-            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPayTarget(null)}>Cancel</Button>
             <Button
-              disabled={!refId.trim() || markPaidMutation.isPending}
+              disabled={markPaidMutation.isPending}
               onClick={() => payTarget && markPaidMutation.mutate(payTarget)}
             >
               {markPaidMutation.isPending ? "Saving…" : "Confirm Payment"}

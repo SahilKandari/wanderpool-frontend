@@ -64,7 +64,7 @@ export default function BookPage({
   const { user, isLoading: authLoading } = useAuth();
 
   const [participants, setParticipants] = useState(
-    Number(searchParams.get("pax") ?? 2)
+    Number(searchParams.get("pax") ?? 1)
   );
   const [selectedSlot, setSelectedSlot] = useState<string>(
     searchParams.get("slot") ?? ""
@@ -105,6 +105,13 @@ export default function BookPage({
     queryFn: () => getExperienceBySlug(slug),
     enabled: !!user,
   });
+
+  // Once experience loads, ensure participants >= min_participants
+  useEffect(() => {
+    if (exp?.min_participants) {
+      setParticipants(p => Math.max(p, exp.min_participants));
+    }
+  }, [exp?.min_participants]);
 
   const { data: slots = [], isLoading: slotsLoading } = useQuery({
     queryKey: ["slots", exp?.id],
@@ -469,16 +476,24 @@ export default function BookPage({
               </div>
 
               {/* Cancellation */}
-              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-2">
-                <Shield className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-emerald-700">
-                  {exp.cancellation_policy === "free_48h"
-                    ? "Free cancellation up to 48 hours before"
-                    : exp.cancellation_policy === "half_refund_24h"
-                    ? "50% refund if cancelled 24 hours before"
-                    : "Non-refundable"}
-                </p>
-              </div>
+              {(() => {
+                const p = exp.cancellation_policy;
+                const [color, icon, label, detail] =
+                  p === "free_48h"
+                    ? ["bg-emerald-50 border-emerald-200 text-emerald-700", <Shield key="s" className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />, "Free cancellation", "Cancel 48+ hours before for a full refund (booking fee non-refundable)."]
+                    : p === "half_refund_24h"
+                    ? ["bg-amber-50 border-amber-200 text-amber-700", <AlertTriangle key="a" className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />, "50% refund up to 24 hours before", "Cancel 24+ hours before for a 50% refund (booking fee non-refundable)."]
+                    : ["bg-red-50 border-red-200 text-red-700", <AlertTriangle key="r" className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />, "Non-refundable", "This experience does not offer refunds for cancellations."];
+                return (
+                  <div className={`mt-4 p-3 border rounded-xl flex items-start gap-2 ${color}`}>
+                    {icon}
+                    <div>
+                      <p className="text-xs font-semibold">{label}</p>
+                      <p className="text-xs mt-0.5 opacity-80">{detail}</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <label className="mt-4 flex items-start gap-2.5 cursor-pointer group">
                 <input

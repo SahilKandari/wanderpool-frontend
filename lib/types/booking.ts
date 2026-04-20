@@ -42,6 +42,10 @@ export interface Booking {
   cover_image_url?: string | null;
   location_name?: string;
   location_city?: string;
+  cancellation_policy?: "free_48h" | "half_refund_24h" | "no_refund";
+  slot_starts_at?: string; // ISO UTC datetime — used for refund calculations
+  razorpay_refund_id?: string | null;
+  refund_amount_paise?: number | null;
 }
 
 export interface Operator {
@@ -55,18 +59,22 @@ export interface Operator {
   created_at: string;
 }
 
-export interface Payout {
+export interface BookingPayout {
   id: string;
+  booking_ref: string;
   agency_id: string;
   agency_name: string;
-  amount_paise: number;
-  full_payment_paise: number;
-  partial_payment_paise: number;
-  status: "pending" | "processing" | "paid" | "failed";
-  booking_count: number;
-  period_start: string;
-  period_end: string;
-  reference_id: string | null;
+  experience_title: string;
+  slot_date: string;
+  total_paise: number;
+  amount_paid_paise: number;
+  platform_fee_paise: number;
+  operator_payout_paise: number;
+  payment_mode: "full" | "partial";
+  booking_status: BookingStatus;
+  payout_initiated_at: string | null;
+  payout_reference: string | null;
+  activity_completed_at: string | null;
   created_at: string;
-  paid_at: string | null;
+  payout_status: "pending" | "paid" | "not_due";
 }

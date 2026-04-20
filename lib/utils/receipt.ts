@@ -18,6 +18,7 @@ export function receiptHTML(booking: Booking): string {
   const isPartial = booking.payment_mode === "partial";
   const paidPaise = booking.amount_paid_paise ?? booking.total_paise;
   const remainingPaise = booking.total_paise - paidPaise;
+  const isCancelled = booking.status === "cancelled";
   const bookedOn = new Date(booking.created_at ?? Date.now()).toLocaleDateString("en-IN", {
     day: "numeric", month: "long", year: "numeric",
   });
@@ -77,13 +78,13 @@ export function receiptHTML(booking: Booking): string {
     }
     /* ── Status bar ── */
     .status-bar {
-      background: #f0fdf4;
-      border-bottom: 1px solid #bbf7d0;
+      background: ${isCancelled ? "#fef2f2" : "#f0fdf4"};
+      border-bottom: 1px solid ${isCancelled ? "#fecaca" : "#bbf7d0"};
       padding: 8px 24px;
       display: flex; align-items: center; gap: 8px;
-      font-size: 12px; font-weight: 600; color: #15803d;
+      font-size: 12px; font-weight: 600; color: ${isCancelled ? "#dc2626" : "#15803d"};
     }
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: ${isCancelled ? "#dc2626" : "#16a34a"}; flex-shrink: 0; }
     /* ── Experience block ── */
     .experience-block { padding: 16px 24px 0; }
     .experience-name {
@@ -173,7 +174,7 @@ export function receiptHTML(booking: Booking): string {
     <!-- Status -->
     <div class="status-bar">
       <div class="status-dot"></div>
-      Booking Confirmed &amp; Payment Received
+      ${isCancelled ? "Booking Cancelled" : "Booking Confirmed &amp; Payment Received"}
     </div>
 
     <!-- Experience -->
@@ -225,20 +226,39 @@ export function receiptHTML(booking: Booking): string {
       <div class="payment-row paid-now">
         <span>Paid now</span><span class="val">${fmt(paidPaise)}</span>
       </div>
-      ${isPartial && remainingPaise > 0 ? `<div class="payment-row due"><span>Due at venue</span><span class="val">${fmt(remainingPaise)}</span></div>` : ""}
+      ${isPartial && remainingPaise > 0 && !isCancelled ? `<div class="payment-row due"><span>Due at venue</span><span class="val">${fmt(remainingPaise)}</span></div>` : ""}
       <div class="payment-row total">
         <span>Total Amount</span><span>${fmt(booking.total_paise)}</span>
       </div>
+      ${isCancelled ? `
+      <div class="payment-row" style="margin-top:6px;border-top:1.5px dashed #e2e8f0;padding-top:8px">
+        <span style="color:#dc2626;font-weight:600">Booking Cancelled</span>
+        <span style="color:#dc2626;font-weight:600">Cancelled</span>
+      </div>
+      ${(booking.refund_amount_paise ?? 0) > 0
+        ? `<div class="payment-row paid-now"><span>Refund Initiated</span><span class="val" style="color:#16a34a">${fmt(booking.refund_amount_paise!)}</span></div>`
+        : `<div class="payment-row"><span>Refund</span><span style="color:#94a3b8">No refund applicable</span></div>`
+      }` : ""}
     </div>
 
     <hr class="divider" />
 
-    <!-- What's next -->
+    <!-- What's next / Cancellation note -->
     <div class="next-block">
+      ${isCancelled ? `
+      <div class="section-title">Cancellation Summary</div>
+      <div class="next-item"><div class="next-dot" style="background:#dc2626"></div><span>This booking has been cancelled and is no longer valid.</span></div>
+      ${(booking.refund_amount_paise ?? 0) > 0
+        ? `<div class="next-item"><div class="next-dot" style="background:#16a34a"></div><span>A refund of <strong>${fmt(booking.refund_amount_paise!)}</strong> has been initiated and will arrive within 5–7 business days.</span></div>`
+        : `<div class="next-item"><div class="next-dot" style="background:#94a3b8"></div><span>No refund applies for this cancellation as per the experience's cancellation policy.</span></div>`
+      }
+      <div class="next-item"><div class="next-dot"></div><span>For support, contact us at support@wanderpool.com</span></div>
+      ` : `
       <div class="section-title">What Happens Next</div>
       <div class="next-item"><div class="next-dot"></div><span>Your guide will contact you on WhatsApp within 30 minutes</span></div>
       <div class="next-item"><div class="next-dot"></div><span>You'll receive a reminder 48 hours before with meeting point details &amp; what to bring</span></div>
       <div class="next-item"><div class="next-dot"></div><span>Show this booking ID <strong>${booking.booking_code}</strong> at the venue</span></div>
+      `}
     </div>
 
     <!-- Footer -->

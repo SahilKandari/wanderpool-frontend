@@ -320,6 +320,19 @@ export default function BookingDetailPage({
                   {isPartial ? "Partial (booking fee only)" : "Full payment"}
                 </span>
               </div>
+              {booking.status === "cancelled" && (
+                <div className="flex justify-between text-sm pt-2 border-t border-slate-100">
+                  <span className="text-slate-600">Refund</span>
+                  <span className={booking.refund_amount_paise && booking.refund_amount_paise > 0
+                    ? "font-medium text-emerald-600"
+                    : "text-slate-500"
+                  }>
+                    {booking.refund_amount_paise && booking.refund_amount_paise > 0
+                      ? `${fmt(booking.refund_amount_paise)} initiated`
+                      : "No refund"}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -388,9 +401,45 @@ export default function BookingDetailPage({
                   month: "long",
                 })}.
               </span>
-              <span className="block text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm">
-                Refund eligibility depends on the cancellation policy for this experience. This cannot be undone.
-              </span>
+              {(() => {
+                const policy = booking.cancellation_policy;
+                const slotAt = booking.slot_starts_at ? new Date(booking.slot_starts_at) : null;
+                const hoursUntil = slotAt ? (slotAt.getTime() - Date.now()) / 3600000 : null;
+                const platformFee = booking.platform_fee_paise ?? 0;
+                const refundable = (booking.amount_paid_paise ?? 0) - platformFee;
+
+                let refundPaise = 0;
+                if (policy === "free_48h" && hoursUntil !== null && hoursUntil >= 48) {
+                  refundPaise = refundable > 0 ? refundable : 0;
+                } else if (policy === "half_refund_24h" && hoursUntil !== null && hoursUntil >= 24) {
+                  refundPaise = refundable > 0 ? Math.floor(refundable / 2) : 0;
+                }
+
+                if (booking.payment_mode === "partial") {
+                  return (
+                    <span className="block text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm">
+                      Your ₹{Math.round(platformFee / 100).toLocaleString("en-IN")} booking fee is non-refundable.
+                      No refund will be issued.
+                    </span>
+                  );
+                }
+                if (refundPaise > 0) {
+                  return (
+                    <span className="block text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm">
+                      You will receive a refund of{" "}
+                      <strong>₹{Math.round(refundPaise / 100).toLocaleString("en-IN")}</strong>{" "}
+                      within 5–7 business days to your original payment method.
+                    </span>
+                  );
+                }
+                return (
+                  <span className="block text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm">
+                    {policy === "no_refund"
+                      ? "This booking is non-refundable. No refund will be issued."
+                      : "Cancellation at this stage does not qualify for a refund. ₹0 will be returned."}
+                  </span>
+                );
+              })()}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:gap-2">

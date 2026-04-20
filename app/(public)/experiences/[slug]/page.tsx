@@ -40,19 +40,22 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { useFavourite } from "@/lib/hooks/useFavourite";
 import { cn } from "@/lib/utils";
 
-const POLICY_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+const POLICY_MAP: Record<string, { label: string; description: string; color: string; icon: React.ReactNode }> = {
   free_48h: {
-    label: "Free cancellation up to 48 hours before",
+    label: "Free cancellation",
+    description: "Cancel at least 48 hours before the activity and get a full refund (minus the non-refundable booking fee). No refund if cancelled within 48 hours.",
     color: "text-emerald-700 bg-emerald-50 border-emerald-200",
     icon: <Shield className="h-4 w-4 text-emerald-600" />,
   },
   half_refund_24h: {
-    label: "50% refund if cancelled 24 hours before",
+    label: "50% refund up to 24 hours before",
+    description: "Cancel at least 24 hours before the activity and receive a 50% refund (minus the non-refundable booking fee). No refund if cancelled within 24 hours.",
     color: "text-amber-700 bg-amber-50 border-amber-200",
     icon: <AlertTriangle className="h-4 w-4 text-amber-600" />,
   },
   no_refund: {
     label: "Non-refundable",
+    description: "This experience does not offer refunds for cancellations. The full amount paid is non-refundable once payment is confirmed.",
     color: "text-red-700 bg-red-50 border-red-200",
     icon: <XCircle className="h-4 w-4 text-red-500" />,
   },
@@ -92,6 +95,10 @@ export default function ExperienceDetailPage({
   const { user } = useAuth();
   const [imgIndex, setImgIndex] = useState(0);
   const [participants, setParticipants] = useState(2);
+  // Reset to min_participants once experience loads
+  useEffect(() => {
+    if (exp?.min_participants) setParticipants(exp.min_participants);
+  }, [exp?.min_participants]);
   const [bookingDate, setBookingDate] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
@@ -392,8 +399,8 @@ export default function ExperienceDetailPage({
             <div className={cn("flex items-start gap-3 p-4 rounded-xl border", policy.color)}>
               {policy.icon}
               <div>
-                <p className="text-sm font-semibold">Cancellation Policy</p>
-                <p className="text-sm mt-0.5">{policy.label}</p>
+                <p className="text-sm font-semibold">{policy.label}</p>
+                <p className="text-xs mt-1 opacity-80 leading-relaxed">{policy.description}</p>
               </div>
             </div>
 
