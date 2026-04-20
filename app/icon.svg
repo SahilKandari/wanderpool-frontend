@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background: rounded indigo square -->
+  <rect width="32" height="32" rx="7" fill="#4f46e5"/>
+
+  <!-- Mountain peak (white) -->
+  <polygon points="16,5 27,22 5,22" fill="white" opacity="0.95"/>
+
+  <!-- Second smaller peak (indigo overlay for depth) -->
+  <polygon points="22,12 27,22 17,22" fill="#4338ca" opacity="0.6"/>
+
+  <!-- Water pool (emerald wave) at base -->
+  <path d="M5,22 Q9,19.5 13,22 Q17,24.5 21,22 Q24.5,19.5 27,22 L27,27 Q24,25 21,27 Q17,29 13,27 Q9,25 5,27 Z" fill="#10b981" opacity="0.9"/>
+</svg>

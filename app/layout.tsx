@@ -15,6 +15,11 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "WanderPool",
   description: "Adventure experience marketplace for India",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
