@@ -205,8 +205,18 @@ function ReceiptContent() {
             {/* Price breakdown */}
             <div className="border-t border-dashed border-slate-200 pt-4 space-y-2">
               <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal</span>
-                <span>{fmt(booking.total_paise)}</span>
+                <span>Subtotal (excl. GST)</span>
+                <span>{fmt(booking.subtotal_paise)}</span>
+              </div>
+              {(booking.gst_paise ?? 0) > 0 && (
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>GST (18%)</span>
+                  <span>{fmt(booking.gst_paise)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Booking fee (non-refundable)</span>
+                <span>{fmt(booking.platform_fee_paise)}</span>
               </div>
               <div className="flex justify-between text-sm font-bold text-slate-900 text-base">
                 <span>Paid now</span>
@@ -214,7 +224,7 @@ function ReceiptContent() {
               </div>
               {isPartial && remainingPaise > 0 && (
                 <div className="flex justify-between text-sm text-amber-600">
-                  <span>Due at venue</span>
+                  <span>Due at venue (cash)</span>
                   <span>{fmt(remainingPaise)}</span>
                 </div>
               )}

@@ -220,9 +220,12 @@ export function receiptHTML(booking: Booking): string {
     <div class="payment-block">
       <div class="section-title">Payment Breakdown</div>
       <div class="payment-row">
-        <span>Subtotal</span><span>${fmt(booking.subtotal_paise ?? booking.total_paise)}</span>
+        <span>Subtotal (excl. GST)</span><span>${fmt(booking.subtotal_paise ?? booking.total_paise)}</span>
       </div>
-      ${(booking.subtotal_paise - booking.total_paise) > 0 ? `<div class="payment-row"><span>Discount</span><span style="color:#16a34a">-${fmt(booking.subtotal_paise - booking.total_paise)}</span></div>` : ""}
+      ${(booking.gst_paise ?? 0) > 0 ? `<div class="payment-row"><span>GST (18%)</span><span>${fmt(booking.gst_paise)}</span></div>` : ""}
+      <div class="payment-row">
+        <span style="color:#64748b;font-size:11px">Booking fee (non-refundable)</span><span style="color:#64748b;font-size:11px">${fmt(booking.platform_fee_paise)}</span>
+      </div>
       <div class="payment-row paid-now">
         <span>Paid now</span><span class="val">${fmt(paidPaise)}</span>
       </div>

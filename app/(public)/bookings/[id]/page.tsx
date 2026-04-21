@@ -299,7 +299,21 @@ export default function BookingDetailPage({
             <h3 className="text-sm font-semibold text-slate-700 mb-3">Payment</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-slate-600">
-                <span>Total amount</span>
+                <span>Subtotal (excl. GST)</span>
+                <span className="font-medium">{fmt(booking.subtotal_paise)}</span>
+              </div>
+              {(booking.gst_paise ?? 0) > 0 && (
+                <div className="flex justify-between text-slate-500">
+                  <span>GST (18%)</span>
+                  <span>{fmt(booking.gst_paise)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-slate-400 text-xs">
+                <span>Booking fee (non-refundable)</span>
+                <span>{fmt(booking.platform_fee_paise)}</span>
+              </div>
+              <div className="flex justify-between text-slate-600 pt-1 border-t border-slate-100">
+                <span>Total</span>
                 <span className="font-medium">{fmt(booking.total_paise)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
@@ -406,38 +420,54 @@ export default function BookingDetailPage({
                 const slotAt = booking.slot_starts_at ? new Date(booking.slot_starts_at) : null;
                 const hoursUntil = slotAt ? (slotAt.getTime() - Date.now()) / 3600000 : null;
                 const platformFee = booking.platform_fee_paise ?? 0;
-                const refundable = (booking.amount_paid_paise ?? 0) - platformFee;
+                const gstPaid = booking.gst_paise ?? 0;
+                const amountPaid = booking.amount_paid_paise ?? 0;
+                // Base refundable = paid minus booking fee minus GST
+                const baseRefundable = Math.max(0, amountPaid - platformFee - gstPaid);
 
-                let refundPaise = 0;
+                let baseRefund = 0;
                 if (policy === "free_48h" && hoursUntil !== null && hoursUntil >= 48) {
-                  refundPaise = refundable > 0 ? refundable : 0;
+                  baseRefund = baseRefundable;
                 } else if (policy === "half_refund_24h" && hoursUntil !== null && hoursUntil >= 24) {
-                  refundPaise = refundable > 0 ? Math.floor(refundable / 2) : 0;
+                  baseRefund = Math.floor(baseRefundable / 2);
                 }
 
-                if (booking.payment_mode === "partial") {
-                  return (
-                    <span className="block text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm">
-                      Your ₹{Math.round(platformFee / 100).toLocaleString("en-IN")} booking fee is non-refundable.
-                      No refund will be issued.
-                    </span>
-                  );
-                }
-                if (refundPaise > 0) {
-                  return (
-                    <span className="block text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm">
-                      You will receive a refund of{" "}
-                      <strong>₹{Math.round(refundPaise / 100).toLocaleString("en-IN")}</strong>{" "}
-                      within 5–7 business days to your original payment method.
-                    </span>
-                  );
-                }
+                // GST is always refunded in full
+                const totalRefund = baseRefund + gstPaid;
+
                 return (
-                  <span className="block text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm">
-                    {policy === "no_refund"
-                      ? "This booking is non-refundable. No refund will be issued."
-                      : "Cancellation at this stage does not qualify for a refund. ₹0 will be returned."}
-                  </span>
+                  <div className="space-y-2">
+                    {/* Itemised breakdown */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm space-y-1.5">
+                      <div className="flex justify-between text-slate-600">
+                        <span>Booking fee</span>
+                        <span className="text-red-600 font-medium">Non-refundable</span>
+                      </div>
+                      {gstPaid > 0 && (
+                        <div className="flex justify-between text-slate-600">
+                          <span>GST</span>
+                          <span className="text-emerald-600 font-medium">{fmt(gstPaid)} refunded</span>
+                        </div>
+                      )}
+                      {baseRefundable > 0 && (
+                        <div className="flex justify-between text-slate-600">
+                          <span>Base amount</span>
+                          <span className={baseRefund > 0 ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}>
+                            {baseRefund > 0 ? `${fmt(baseRefund)} refunded` : "Non-refundable"}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-semibold text-slate-800 pt-1.5 border-t border-slate-200">
+                        <span>You will receive</span>
+                        <span className={totalRefund > 0 ? "text-emerald-600" : "text-red-600"}>
+                          {totalRefund > 0 ? fmt(totalRefund) : "₹0"}
+                        </span>
+                      </div>
+                    </div>
+                    {totalRefund > 0 && (
+                      <p className="text-xs text-slate-500">Refund will be credited within 5–7 business days to your original payment method.</p>
+                    )}
+                  </div>
                 );
               })()}
             </DialogDescription>

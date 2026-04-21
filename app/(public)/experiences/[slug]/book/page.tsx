@@ -75,6 +75,7 @@ export default function BookPage({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [partialEnabled, setPartialEnabled] = useState(true);
   const [commissionPct, setCommissionPct] = useState(13);
+  const [gstPct, setGstPct] = useState(18);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
@@ -92,6 +93,8 @@ export default function BookPage({
       .then((d) => {
         const bps = Number(d.commission_rate_bps ?? 1300);
         setCommissionPct(Math.round(bps / 100));
+        const gstBps = Number(d.gst_rate_bps ?? 1800);
+        setGstPct(Math.round(gstBps / 100));
         // Default to enabled if key is missing
         if (d.partial_payment_enabled !== undefined) {
           setPartialEnabled(d.partial_payment_enabled === "true");
@@ -142,8 +145,11 @@ export default function BookPage({
   const slot = slots.find((s) => s.id === selectedSlot);
   const pricePerPax = slot?.base_price_paise ?? exp?.base_price_paise ?? 0;
   const subtotal = pricePerPax * participants;
+  const gstPaise = Math.round((subtotal * gstPct) / 100);
+  const totalPaise = subtotal + gstPaise;
   const platformFee = Math.round((subtotal * commissionPct) / 100);
-  const chargePaise = paymentMode === "partial" ? platformFee : subtotal;
+  // GST always collected upfront; partial = booking fee + full GST now
+  const chargePaise = paymentMode === "partial" ? platformFee + gstPaise : totalPaise;
   const remainingPaise = paymentMode === "partial" ? subtotal - platformFee : 0;
 
   async function handlePay() {
@@ -416,8 +422,8 @@ export default function BookPage({
                           </p>
                           <p className="text-xs text-slate-500 mt-0.5">
                             {isPartial
-                              ? `Pay ${fmt(amount)} now · remaining ${fmt(remainingPaise)} at venue`
-                              : `Pay ${fmt(amount)} now · nothing due later`}
+                              ? `Booking fee ${fmt(platformFee)} + GST ${fmt(gstPaise)} now · ${fmt(remainingPaise)} cash at venue`
+                              : `Pay ${fmt(amount)} now (incl. GST ${fmt(gstPaise)}) · nothing due later`}
                           </p>
                         </div>
                       </button>
@@ -454,6 +460,12 @@ export default function BookPage({
                   </span>
                   <span>{fmt(subtotal)}</span>
                 </div>
+                {gstPaise > 0 && (
+                  <div className="flex justify-between text-slate-500 text-xs">
+                    <span>GST ({gstPct}%)</span>
+                    <span>{fmt(gstPaise)}</span>
+                  </div>
+                )}
                 {paymentMode === "partial" && (
                   <>
                     <div className="flex justify-between text-slate-600">
@@ -464,13 +476,13 @@ export default function BookPage({
                       <span>{fmt(platformFee)}</span>
                     </div>
                     <div className="flex justify-between text-slate-400 text-xs">
-                      <span>Due at venue</span>
+                      <span>Due at venue (cash)</span>
                       <span>{fmt(remainingPaise)}</span>
                     </div>
                   </>
                 )}
                 <div className="border-t border-slate-100 pt-2 flex justify-between font-bold text-slate-900">
-                  <span>Pay now</span>
+                  <span>{paymentMode === "partial" ? "Pay now" : "Total"}</span>
                   <span>{fmt(chargePaise)}</span>
                 </div>
               </div>
@@ -478,12 +490,14 @@ export default function BookPage({
               {/* Cancellation */}
               {(() => {
                 const p = exp.cancellation_policy;
+                const gstNote = gstPaise > 0 ? ` GST (${fmt(gstPaise)}) is always refunded.` : "";
+                const feeNote = `Booking fee (${fmt(platformFee)}) is non-refundable.`;
                 const [color, icon, label, detail] =
                   p === "free_48h"
-                    ? ["bg-emerald-50 border-emerald-200 text-emerald-700", <Shield key="s" className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />, "Free cancellation", "Cancel 48+ hours before for a full refund (booking fee non-refundable)."]
+                    ? ["bg-emerald-50 border-emerald-200 text-emerald-700", <Shield key="s" className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />, "Free cancellation", `Cancel 48+ hours before for a full base refund.${gstNote} ${feeNote}`]
                     : p === "half_refund_24h"
-                    ? ["bg-amber-50 border-amber-200 text-amber-700", <AlertTriangle key="a" className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />, "50% refund up to 24 hours before", "Cancel 24+ hours before for a 50% refund (booking fee non-refundable)."]
-                    : ["bg-red-50 border-red-200 text-red-700", <AlertTriangle key="r" className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />, "Non-refundable", "This experience does not offer refunds for cancellations."];
+                    ? ["bg-amber-50 border-amber-200 text-amber-700", <AlertTriangle key="a" className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />, "50% refund up to 24 hours before", `Cancel 24+ hours before for a 50% base refund.${gstNote} ${feeNote}`]
+                    : ["bg-red-50 border-red-200 text-red-700", <AlertTriangle key="r" className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />, "Non-refundable", `No base refund on cancellation.${gstNote} ${feeNote}`];
                 return (
                   <div className={`mt-4 p-3 border rounded-xl flex items-start gap-2 ${color}`}>
                     {icon}

@@ -45,6 +45,7 @@ export default function AdminSettingsPage() {
 
   // Local form state — initialised from loaded settings
   const [commissionPct, setCommissionPct] = useState("13");
+  const [gstPct, setGstPct] = useState("18");
   const [featuredFee, setFeaturedFee] = useState("1499");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [newRegistrations, setNewRegistrations] = useState(true);
@@ -57,6 +58,8 @@ export default function AdminSettingsPage() {
     if (!settings || Object.keys(settings).length === 0) return;
     if (settings.commission_rate_bps)
       setCommissionPct(String(Number(settings.commission_rate_bps) / 100));
+    if (settings.gst_rate_bps)
+      setGstPct(String(Number(settings.gst_rate_bps) / 100));
     if (settings.featured_fee_paise)
       setFeaturedFee(String(Math.round(Number(settings.featured_fee_paise) / 100)));
     if (settings.maintenance_mode !== undefined)
@@ -83,6 +86,7 @@ export default function AdminSettingsPage() {
   function handleSave() {
     save({
       commission_rate_bps:          String(Math.round(Number(commissionPct) * 100)),
+      gst_rate_bps:                 String(Math.round(Number(gstPct) * 100)),
       featured_fee_paise:           String(Number(featuredFee) * 100),
       maintenance_mode:             String(maintenanceMode),
       allow_new_registrations:      String(newRegistrations),
@@ -157,6 +161,26 @@ export default function AdminSettingsPage() {
                   Operators receive {Math.max(0, 100 - Number(commissionPct)).toFixed(1)}% of each booking.
                 </p>
               </div>
+              <div className="space-y-1.5">
+                <Label>GST Rate (%)</Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={30}
+                    step={0.5}
+                    value={gstPct}
+                    onChange={e => setGstPct(e.target.value)}
+                    className="pr-8"
+                  />
+                  <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Added on top of the experience price. Set to 0 to disable GST.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Featured Listing Fee (₹/month)</Label>
                 <div className="relative">

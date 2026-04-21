@@ -25,6 +25,7 @@ export interface Booking {
   slot_start_time: string;
   participants: number;
   subtotal_paise: number;
+  gst_paise: number;
   total_paise: number;
   platform_fee_paise: number;
   operator_payout_paise: number;
