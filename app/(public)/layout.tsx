@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Menu, X, Mountain, Search, User, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
+import { listPublicExperiences } from "@/lib/api/experiences";
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,10 +22,31 @@ function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Fetch top 2 cities from DB (by experience count)
+  const { data: topCities = [] } = useQuery({
+    queryKey: ["nav-top-cities"],
+    queryFn: async () => {
+      const exps = await listPublicExperiences({ limit: 200 });
+      const counts: Record<string, number> = {};
+      for (const exp of exps) {
+        if (exp.location_city) {
+          counts[exp.location_city] = (counts[exp.location_city] ?? 0) + 1;
+        }
+      }
+      return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 2)
+        .map(([city]) => city);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const navLinks = [
     { href: "/experiences", label: "Explore" },
-    { href: "/experiences?city=Rishikesh", label: "Rishikesh" },
-    { href: "/experiences?city=Mussoorie", label: "Mussoorie" },
+    ...topCities.map((city) => ({
+      href: `/experiences?city=${encodeURIComponent(city)}`,
+      label: city,
+    })),
   ];
 
   return (

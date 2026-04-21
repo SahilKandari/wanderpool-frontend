@@ -202,6 +202,18 @@ function ExperiencesContent() {
   const [cityOpen, setCityOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
 
+  // Sync URL → state when searchParams change (navbar city links / external navigation)
+  useEffect(() => {
+    setSearch(searchParams.get("q") ?? "");
+    setCity(searchParams.get("city") ?? "");
+    setMaxPrice(searchParams.get("max_price") ?? "");
+    setDuration(searchParams.get("duration") ?? "");
+    // Only reset category_id from URL if a direct category_id param is present
+    const urlCategoryId = searchParams.get("category_id");
+    if (urlCategoryId !== null) setCategoryId(urlCategoryId);
+    else if (!searchParams.get("category")) setCategoryId("");
+  }, [searchParams]);
+
   // Sync filter state → URL so the URL is shareable / bookmarkable
   useEffect(() => {
     const params = new URLSearchParams();
@@ -214,6 +226,11 @@ function ExperiencesContent() {
     router.replace(qs ? `/experiences?${qs}` : "/experiences", { scroll: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, city, categoryId, duration, maxPrice]);
+
+  // Close city dropdown when mobile filter panel collapses
+  useEffect(() => {
+    if (!filtersOpen) setCityOpen(false);
+  }, [filtersOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -230,6 +247,14 @@ function ExperiencesContent() {
     queryKey: categoryKeys.roots(),
     queryFn: listRootCategories,
   });
+
+  // Map ?category=slug (from home page links) to category_id UUID
+  useEffect(() => {
+    const slug = searchParams.get("category");
+    if (!slug || categories.length === 0) return;
+    const match = categories.find((c) => c.slug === slug);
+    if (match) setCategoryId(match.id);
+  }, [categories, searchParams]);
 
   const queryParams = {
     city: city || undefined,
@@ -294,7 +319,7 @@ function ExperiencesContent() {
             initial={false}
             animate={{ height: filtersOpen ? "auto" : 0, opacity: filtersOpen ? 1 : 0 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="overflow-hidden sm:h-auto! sm:opacity-100!"
+            className={cn("sm:h-auto! sm:opacity-100! sm:overflow-visible", cityOpen ? "overflow-visible" : "overflow-hidden")}
           >
             <div className="pb-3 pt-3 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-0">
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
