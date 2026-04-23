@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CategoryPicker } from "@/components/experiences/CategoryPicker";
 import { DynamicMetadataForm } from "@/components/experiences/DynamicMetadataForm";
 import { experienceKeys, createExperience } from "@/lib/api/experiences";
+import { categoryKeys, getCategoryFields } from "@/lib/api/categories";
+import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
 const schema = z.object({
@@ -52,7 +54,7 @@ export default function NewExperiencePage() {
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
 
-  const { control, register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { control, register, watch, setValue, trigger, setError, clearErrors, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: {
       location_state: "Uttarakhand",
@@ -64,6 +66,21 @@ export default function NewExperiencePage() {
   });
 
   const selectedCategory = watch("category_id");
+
+  // Fetch required metadata fields for client-side validation before submit.
+  const { data: categoryFields = [] } = useQuery({
+    queryKey: categoryKeys.fields(selectedCategory),
+    queryFn: () => getCategoryFields(selectedCategory),
+    enabled: !!selectedCategory,
+  });
+
+  // Fields that must pass validation on each step before advancing.
+  const STEP_FIELDS: (keyof FormData)[][] = [
+    ["category_id"],
+    ["title", "description", "location_name", "location_city"],
+    ["base_price_paise", "duration_minutes"],
+    [],
+  ];
 
   const mutation = useMutation({
     mutationFn: (data: FormData) => createExperience({
@@ -88,10 +105,62 @@ export default function NewExperiencePage() {
       qc.invalidateQueries({ queryKey: experienceKeys.mine() });
       router.push(`/agency/experiences/${exp.id}/slots`);
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && err.fields) {
+        const missing = Object.keys(err.fields).join(", ");
+        toast.error(`Please fill in: ${missing}`, { duration: 6000 });
+        // Jump to Activity Info step where metadata fields live
+        setStep(3);
+      } else {
+        toast.error(err.message);
+      }
+    },
   });
 
-  function onSubmit(data: FormData) {
+  async function handleNext() {
+    const fields = STEP_FIELDS[step];
+    const valid = fields.length === 0 || await trigger(fields);
+    if (valid) {
+      // Clear any stale errors (e.g. from a previous partial submit attempt)
+      // so the next step renders clean.
+      clearErrors();
+      setStep((s) => s + 1);
+    }
+  }
+
+  async function handleCreate() {
+    // 1. Run zod validation on all registered fields.
+    const isZodValid = await trigger();
+    if (!isZodValid) {
+      // Jump to the first step that has an error.
+      for (let i = 0; i < STEP_FIELDS.length; i++) {
+        if (STEP_FIELDS[i].some((f) => errors[f])) {
+          setStep(i);
+          toast.error("Please fix the highlighted fields before continuing.");
+          return;
+        }
+      }
+      return;
+    }
+
+    // 2. Client-side check for required metadata fields (dynamic, not in zod schema).
+    const data = getValues();
+    const missingFields = categoryFields.filter((f) => {
+      if (!f.is_required) return false;
+      const val = data.metadata?.[f.field_key];
+      return val === undefined || val === null || val === "" ||
+        (Array.isArray(val) && val.length === 0);
+    });
+
+    if (missingFields.length > 0) {
+      missingFields.forEach((f) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setError(`metadata.${f.field_key}` as any, { message: "This field is required" });
+      });
+      toast.error(`Please fill in: ${missingFields.map((f) => f.label).join(", ")}`);
+      return;
+    }
+
     mutation.mutate(data);
   }
 
@@ -268,7 +337,7 @@ export default function NewExperiencePage() {
       {/* Card */}
       <Card className="border-border shadow-sm">
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={(e) => e.preventDefault()}>
             {stepContent[step]}
 
             <div className="flex items-center justify-between mt-6 pt-4 border-t">
@@ -282,11 +351,11 @@ export default function NewExperiencePage() {
               </Button>
 
               {step < STEPS.length - 1 ? (
-                <Button type="button" onClick={() => setStep((s) => s + 1)}>
+                <Button type="button" onClick={handleNext}>
                   Next <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={mutation.isPending}>
+                <Button type="button" onClick={handleCreate} disabled={mutation.isPending}>
                   {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {mutation.isPending ? "Creating…" : "Create Experience"}
                 </Button>

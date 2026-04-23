@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+import { useState } from "react";
 import { Controller, type Control, type FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,38 @@ interface DynamicMetadataFormProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<FieldValues, any, FieldValues>;
   namePrefix?: string; // default "metadata"
+}
+
+// Separate component so it can hold its own raw-string state without
+// re-rendering the whole form on every keystroke.
+function StringArrayInput({
+  value,
+  onChange,
+  hasError,
+}: {
+  value: unknown;
+  onChange: (v: string[]) => void;
+  hasError: boolean;
+}) {
+  const toDisplay = (v: unknown) =>
+    Array.isArray(v) ? v.join(", ") : typeof v === "string" ? v : "";
+
+  const [raw, setRaw] = useState(() => toDisplay(value));
+
+  return (
+    <Input
+      value={raw}
+      onChange={(e) => setRaw(e.target.value)}
+      onBlur={() => {
+        const parsed = raw.split(",").map((s) => s.trim()).filter(Boolean);
+        onChange(parsed);
+        // Re-normalise display so it's consistent with what will be submitted
+        setRaw(parsed.join(", "));
+      }}
+      placeholder="Comma-separated values e.g. Life jacket, Helmet"
+      className={cn(hasError && "border-destructive")}
+    />
+  );
 }
 
 function FieldInput({
@@ -83,13 +116,10 @@ function FieldInput({
                 placeholder={field.validation?.min != null ? `Min: ${field.validation.min}` : undefined}
               />
             ) : field.field_type === "string_array" ? (
-              <Input
-                value={Array.isArray(f.value) ? f.value.join(", ") : (f.value ?? "")}
-                onChange={(e) =>
-                  f.onChange(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))
-                }
-                placeholder="Comma-separated values"
-                className={cn(fieldState.error && "border-destructive")}
+              <StringArrayInput
+                value={f.value}
+                onChange={f.onChange}
+                hasError={!!fieldState.error}
               />
             ) : (
               <Input

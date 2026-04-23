@@ -3,7 +3,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:808
 export class ApiError extends Error {
   constructor(
     public status: number,
-    public message: string
+    public message: string,
+    public fields?: Record<string, string>
   ) {
     super(message);
   }
@@ -12,13 +13,17 @@ export class ApiError extends Error {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let message = `Request failed: ${res.status}`;
+    let fields: Record<string, string> | undefined;
     try {
       const data = await res.json();
       message = data.error ?? data.message ?? message;
+      if (data.fields && typeof data.fields === "object") {
+        fields = data.fields;
+      }
     } catch {
       // ignore parse error
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, fields);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
