@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { AuthProvider } from "@/lib/providers/AuthProvider";
@@ -71,6 +72,7 @@ export default function RootLayout({
             <NotificationProvider>
               {children}
               <Toaster richColors position="top-right" />
+              <Analytics />
             </NotificationProvider>
           </AuthProvider>
         </QueryProvider>
