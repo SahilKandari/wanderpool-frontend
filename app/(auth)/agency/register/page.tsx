@@ -61,7 +61,7 @@ export default function AgencyRegisterPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ ...data, website: "" }), // honeypot always empty for real users
         }
       );
       const json = await backendRes.json();
@@ -101,6 +101,9 @@ export default function AgencyRegisterPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Honeypot — hidden from real users, bots fill it */}
+          <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+
           <div className="space-y-1.5">
             <Label>Account Type</Label>
             <Select

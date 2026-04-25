@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import {
   Mail,
   Clock,
@@ -12,10 +13,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,10 +30,17 @@ export default function ContactPage() {
       const res = await fetch(`${BACKEND}/api/v1/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          website: "",              // honeypot — always empty for real users
+          cf_turnstile_token: turnstileToken ?? "",
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        // Reset Turnstile so user can try again
+        turnstileRef.current?.reset();
+        setTurnstileToken(null);
         throw new Error(err.error ?? "Something went wrong");
       }
       setSubmitted(true);
@@ -38,6 +50,8 @@ export default function ContactPage() {
       setSubmitting(false);
     }
   }
+
+  const canSubmit = !submitting && (TURNSTILE_SITE_KEY === "" || turnstileToken !== null);
 
   return (
     <div className="min-h-screen bg-white pt-16">
@@ -132,7 +146,7 @@ export default function ContactPage() {
                   We'll get back to you at <strong>{form.email}</strong> within 4 business hours.
                 </p>
                 <button
-                  onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "", message: "" }); }}
+                  onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "", message: "" }); setTurnstileToken(null); turnstileRef.current?.reset(); }}
                   className="mt-6 text-sm text-primary hover:underline"
                 >
                   Send another message
@@ -141,6 +155,17 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <h2 className="text-xl font-bold text-slate-900 mb-5">Send us a message</h2>
+
+                {/* Honeypot — hidden from real users, bots fill it */}
+                <input
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden"
+                />
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
@@ -201,9 +226,21 @@ export default function ContactPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
                   />
                 </div>
+
+                {/* Cloudflare Turnstile — only rendered when site key is configured */}
+                {TURNSTILE_SITE_KEY && (
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                  />
+                )}
+
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={!canSubmit}
                   className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-60"
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
