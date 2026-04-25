@@ -50,7 +50,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-import { bookingKeys, listMyBookings, cancelBooking, agencyCollectCash, assignGuide } from "@/lib/api/bookings";
+import { bookingKeys, listMyBookings, cancelBooking, agencyCollectCash, assignGuide, markBookingStarted, markBookingCompleted } from "@/lib/api/bookings";
+import { useAuth } from "@/lib/providers/AuthProvider";
 import { guideKeys, listGuides } from "@/lib/api/guides";
 import type { Booking, BookingStatus, Operator } from "@/lib/types/booking";
 import { paiseToCurrency } from "@/lib/utils/currency";
@@ -96,9 +97,29 @@ function BookingDetailDialog({
   booking: Booking | null;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
+  const isSoloOperator = user?.accountType === "solo_operator";
   const qc = useQueryClient();
   // Always initialise from the booking's current operator so dropdown shows the right value
   const [pendingOperator, setPendingOperator] = useState<string>("");
+
+  const startMutation = useMutation({
+    mutationFn: (id: string) => markBookingStarted(id),
+    onSuccess: () => {
+      toast.success("Activity marked as started");
+      qc.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => markBookingCompleted(id),
+    onSuccess: () => {
+      toast.success("Activity marked as complete — payout will be triggered");
+      qc.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
   const [confirmReassign, setConfirmReassign] = useState(false);
   const [confirmCash, setConfirmCash] = useState(false);
 
@@ -215,8 +236,41 @@ function BookingDetailDialog({
             </p>
           </div>
 
-          {/* Guide assignment — confirmed bookings only */}
-          {booking.status === "confirmed" && (
+          {/* Start/Complete actions — solo operators only */}
+          {isSoloOperator && booking.status === "confirmed" && (
+            <div className="rounded-lg border p-3 space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Activity</p>
+              {cashPending && (
+                <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  Collect the cash payment above before marking the activity as started or complete.
+                </div>
+              )}
+              {!booking.activity_started_at && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  disabled={startMutation.isPending || cashPending}
+                  onClick={() => { startMutation.mutate(booking.id); onClose(); }}
+                >
+                  <Play className="h-3.5 w-3.5 mr-2" />Mark Activity Started
+                </Button>
+              )}
+              {booking.activity_started_at && !booking.activity_completed_at && (
+                <Button
+                  size="sm"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={completeMutation.isPending || cashPending}
+                  onClick={() => { completeMutation.mutate(booking.id); onClose(); }}
+                >
+                  <CheckCheck className="h-3.5 w-3.5 mr-2" />Mark Activity Complete
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Guide assignment — agency accounts only (not solo operators) */}
+          {!isSoloOperator && booking.status === "confirmed" && (
             <div className="rounded-lg border p-3 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Assigned Guide</p>
               {activityStarted && (
@@ -481,6 +535,9 @@ function TableSkeletonRows() {
 type StatusFilter = BookingStatus | "all";
 
 export default function AgencyBookingsPage() {
+  const { user } = useAuth();
+  const isSoloOperator = user?.accountType === "solo_operator";
+  const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -492,6 +549,28 @@ export default function AgencyBookingsPage() {
     queryKey: bookingKeys.mine(),
     queryFn: () => listMyBookings(),
   });
+
+  const startMutation = useMutation({
+    mutationFn: (id: string) => markBookingStarted(id),
+    onSuccess: () => {
+      toast.success("Activity marked as started");
+      qc.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => markBookingCompleted(id),
+    onSuccess: () => {
+      toast.success("Activity marked as complete — payout will be triggered");
+      qc.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  // Cash is still owed if it's a partial-payment booking and the amount paid is less than total
+  const hasCashPending = (b: Booking) =>
+    b.payment_mode === "partial" && (b.amount_paid_paise ?? 0) < b.total_paise;
 
   // Client-side filtering
   const filtered = useMemo(() => {
@@ -528,6 +607,13 @@ export default function AgencyBookingsPage() {
         title="Bookings"
         description="Manage all your experience bookings"
       />
+
+      {isSoloOperator && (
+        <div className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-500" />
+          Mark confirmed bookings as started and complete to trigger your payout.
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -762,6 +848,32 @@ export default function AgencyBookingsPage() {
                         <Eye className="h-3.5 w-3.5 mr-1" />
                         View
                       </Button>
+                      {isSoloOperator && b.status === "confirmed" && !b.activity_started_at && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-blue-600 hover:text-blue-700"
+                          disabled={startMutation.isPending || hasCashPending(b)}
+                          title={hasCashPending(b) ? "Collect cash first before starting" : undefined}
+                          onClick={() => startMutation.mutate(b.id)}
+                        >
+                          <Play className="h-3.5 w-3.5 mr-1" />
+                          Start
+                        </Button>
+                      )}
+                      {isSoloOperator && !!b.activity_started_at && !b.activity_completed_at && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-emerald-600 hover:text-emerald-700"
+                          disabled={completeMutation.isPending || hasCashPending(b)}
+                          title={hasCashPending(b) ? "Collect cash first before completing" : undefined}
+                          onClick={() => completeMutation.mutate(b.id)}
+                        >
+                          <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                          Complete
+                        </Button>
+                      )}
                       {canCancel(b.status) && (
                         <Button
                           variant="ghost"

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/providers/AuthProvider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -141,14 +143,25 @@ function GuideCard({
 }
 
 export default function AgencyGuidesPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<Operator | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
 
+  const isSoloOperator = user?.accountType === "solo_operator";
+
+  useEffect(() => {
+    if (!authLoading && isSoloOperator) {
+      router.replace("/agency/dashboard");
+    }
+  }, [authLoading, isSoloOperator, router]);
+
   const { data: guides = [], isLoading } = useQuery({
     queryKey: guideKeys.list(),
     queryFn: listGuides,
+    enabled: !isSoloOperator,
   });
 
   const inviteMutation = useMutation({
@@ -181,6 +194,9 @@ export default function AgencyGuidesPage() {
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  // Redirect solo operators — all hooks are called above before this guard
+  if (authLoading || isSoloOperator) return null;
 
   const active = guides.filter(g => g.status === "active").length;
   const inactive = guides.filter(g => g.status !== "active").length;

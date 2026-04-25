@@ -45,7 +45,10 @@ export function AgencySidebar({ mobile = false, onNavClick }: { mobile?: boolean
   const pathname = usePathname();
   const { user } = useAuth();
   const role = user?.actorKind === "operator" ? "operator" : "agency";
-  const visible = navItems.filter((i) => i.roles.includes(role as "agency" | "operator"));
+  const isSoloOperator = user?.accountType === "solo_operator";
+  const visible = navItems
+    .filter((i) => i.roles.includes(role as "agency" | "operator"))
+    .filter((i) => !(isSoloOperator && i.href === "/agency/guides"));
 
   return (
     <aside className={mobile ? "flex flex-col w-64 border-r border-border bg-white" : "hidden lg:flex lg:flex-col w-64 border-r border-border bg-white"}>
@@ -57,7 +60,7 @@ export function AgencySidebar({ mobile = false, onNavClick }: { mobile?: boolean
         <div>
           <p className="font-bold text-sm leading-none text-foreground">WanderPool</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {role === "operator" ? "Guide Portal" : "Agency Portal"}
+            {role === "operator" ? "Guide Portal" : isSoloOperator ? "Solo Operator Portal" : "Agency Portal"}
           </p>
         </div>
       </Link>
@@ -95,7 +98,7 @@ export function AgencySidebar({ mobile = false, onNavClick }: { mobile?: boolean
       {/* Footer */}
       <div className="border-t border-border px-4 py-3">
         <p className="text-[11px] text-muted-foreground text-center">
-          Uttarakhand Adventures 🏔️
+          {role === "operator" ? "Guide Account" : isSoloOperator ? "Solo Operator Account" : "Agency Account"}
         </p>
       </div>
     </aside>

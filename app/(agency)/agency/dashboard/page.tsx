@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Map, BookOpen, Star, TrendingUp, ClipboardList } from "lucide-react";
+import { Map, BookOpen, Star, TrendingUp, ClipboardList, Users, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +13,15 @@ import { Button } from "@/components/ui/button";
 import { ExperienceStatusBadge } from "@/components/shared/StatusBadge";
 import { paiseToCurrency } from "@/lib/utils/currency";
 import { apiFetch } from "@/lib/api/client";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface OnboardingStatus {
   onboarding_submitted_at: string | null;
@@ -22,7 +32,29 @@ interface OnboardingStatus {
 }
 
 export default function AgencyDashboardPage() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
+  const isSoloOperator = user?.accountType === "solo_operator";
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+
+  async function handleUpgrade() {
+    setUpgradeLoading(true);
+    try {
+      const res = await fetch("/api/auth/upgrade", { method: "POST" });
+      if (!res.ok) {
+        const d = await res.json();
+        toast.error(d.error ?? "Upgrade failed");
+        return;
+      }
+      await refresh();
+      toast.success("Upgraded to Agency! You can now invite guides.");
+      setUpgradeOpen(false);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setUpgradeLoading(false);
+    }
+  }
 
   const { data: onboarding } = useQuery<OnboardingStatus>({
     queryKey: ["agency", "onboarding"],
@@ -84,7 +116,7 @@ export default function AgencyDashboardPage() {
     <div>
       <PageHeader
         title={`Welcome back 👋`}
-        description="Here's an overview of your WanderPool account"
+        description={isSoloOperator ? "Here's an overview of your Solo Operator account" : "Here's an overview of your Agency account"}
         action={
           <Button asChild>
             <Link href="/agency/experiences/new">+ New Experience</Link>
@@ -114,6 +146,24 @@ export default function AgencyDashboardPage() {
           </div>
           <Button size="sm" variant="outline" asChild className="shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100">
             <Link href="/agency/onboarding">View Status</Link>
+          </Button>
+        </div>
+      )}
+
+      {/* Upgrade to Agency banner — solo operators only */}
+      {isSoloOperator && (
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-violet-800">
+          <Users className="h-5 w-5 shrink-0 text-violet-700" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-violet-900">Scale up to an Agency</p>
+            <p className="text-xs text-violet-700 mt-0.5">Invite guides, assign bookings to your team, and grow beyond yourself.</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setUpgradeOpen(true)}
+            className="shrink-0 bg-violet-600 hover:bg-violet-700 text-white border-0"
+          >
+            Upgrade
           </Button>
         </div>
       )}
@@ -193,6 +243,52 @@ export default function AgencyDashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Upgrade to Agency modal */}
+      <Dialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upgrade to Agency</DialogTitle>
+            <DialogDescription>
+              This converts your Solo Operator account to a full Agency account. This action cannot be reversed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="font-medium text-foreground mb-1.5">What changes:</p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>You gain access to the Guides management section</li>
+                <li>You can invite guides and assign bookings to your team</li>
+                <li>Your account type changes from Solo Operator to Agency</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1.5">What stays the same:</p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>All your existing experiences, bookings, and earnings</li>
+                <li>Your onboarding and KYC verification status</li>
+                <li>Your pricing, reviews, and payout history</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUpgradeOpen(false)} disabled={upgradeLoading}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-violet-600 hover:bg-violet-700"
+              disabled={upgradeLoading}
+              onClick={handleUpgrade}
+            >
+              {upgradeLoading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Upgrading…</>
+              ) : (
+                "Yes, Upgrade My Account"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
