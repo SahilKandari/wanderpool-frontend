@@ -10,6 +10,12 @@ export type CancellationPolicy =
   | "half_refund_24h"
   | "no_refund";
 
+export interface ItineraryDay {
+  day: number;
+  title: string;
+  description: string;
+}
+
 export interface Experience {
   id: string;
   agency_id: string;
@@ -25,6 +31,7 @@ export interface Experience {
   metadata: Record<string, unknown>;
   inclusions: string[];
   exclusions: string[];
+  itinerary?: ItineraryDay[];
   min_participants: number;
   max_participants: number;
   duration_minutes: number;

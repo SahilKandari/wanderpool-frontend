@@ -2,12 +2,12 @@
 
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, Controller, type Resolver, type Control } from "react-hook-form";
+import { useForm, Controller, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,12 @@ import {
   updateExperience,
   listMyExperiences,
 } from "@/lib/api/experiences";
-import type { Experience } from "@/lib/types/experience";
+
+const itineraryDaySchema = z.object({
+  day: z.number().int().min(1),
+  title: z.string().min(1, "Day title is required"),
+  description: z.string().min(1, "Day description is required"),
+});
 
 const schema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -45,6 +50,7 @@ const schema = z.object({
   inclusions: z.string().default(""),
   exclusions: z.string().default(""),
   metadata: z.record(z.string(), z.unknown()).default({}),
+  itinerary: z.array(itineraryDaySchema).default([]),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -85,7 +91,6 @@ export default function EditExperiencePage({
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isDirty },
   } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
@@ -95,8 +100,11 @@ export default function EditExperiencePage({
       max_participants: 20,
       cancellation_policy: "free_48h",
       metadata: {},
+      itinerary: [],
     },
   });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "itinerary" });
 
   // Populate form once experience loads
   useEffect(() => {
@@ -116,6 +124,7 @@ export default function EditExperiencePage({
       inclusions: experience.inclusions?.join(", ") ?? "",
       exclusions: experience.exclusions?.join(", ") ?? "",
       metadata: (experience.metadata as Record<string, unknown>) ?? {},
+      itinerary: experience.itinerary ?? [],
     });
   }, [experience, reset]);
 
@@ -141,6 +150,7 @@ export default function EditExperiencePage({
           ? data.exclusions.split(",").map((s) => s.trim()).filter(Boolean)
           : [],
         metadata: data.metadata,
+        itinerary: data.itinerary,
       }),
     onSuccess: () => {
       toast.success("Experience updated");
@@ -200,10 +210,11 @@ export default function EditExperiencePage({
         <CardContent className="p-6">
           <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
             <Tabs defaultValue="details">
-              <TabsList className="mb-6 w-full grid grid-cols-2 h-auto gap-1 sm:flex sm:h-10">
+              <TabsList className="mb-6 w-full grid grid-cols-3 h-auto gap-1 sm:flex sm:h-10">
                 <TabsTrigger value="details" className="py-2 text-xs sm:text-sm sm:flex-1">Details</TabsTrigger>
                 <TabsTrigger value="pricing" className="py-2 text-xs sm:text-sm sm:flex-1">Pricing & Policy</TabsTrigger>
                 <TabsTrigger value="activity" className="py-2 text-xs sm:text-sm sm:flex-1">Activity Info</TabsTrigger>
+                <TabsTrigger value="itinerary" className="py-2 text-xs sm:text-sm sm:flex-1">Itinerary</TabsTrigger>
                 <TabsTrigger
                   value="slots"
                   className="py-2 text-xs sm:text-sm sm:flex-1"
@@ -375,6 +386,72 @@ export default function EditExperiencePage({
                   categoryId={experience.category_id}
                   control={control as never}
                 />
+              </TabsContent>
+
+              {/* Tab: Itinerary */}
+              <TabsContent value="itinerary" className="mt-0">
+                <div className="mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    Add a day-by-day breakdown of the experience. Customers see this as an expandable itinerary on your listing page.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="rounded-xl border border-border p-4 space-y-3 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
+                          Day {index + 1}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Day Title <span className="text-destructive">*</span></Label>
+                        <Input
+                          placeholder="e.g. Arrival & Rishikesh Exploration"
+                          {...register(`itinerary.${index}.title`)}
+                        />
+                        {errors.itinerary?.[index]?.title && (
+                          <p className="text-xs text-destructive">{errors.itinerary[index]?.title?.message}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Description <span className="text-destructive">*</span></Label>
+                        <Textarea
+                          rows={3}
+                          placeholder="Describe what happens on this day…"
+                          {...register(`itinerary.${index}.description`)}
+                        />
+                        {errors.itinerary?.[index]?.description && (
+                          <p className="text-xs text-destructive">{errors.itinerary[index]?.description?.message}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-dashed"
+                    onClick={() => append({ day: fields.length + 1, title: "", description: "" })}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Day {fields.length + 1}
+                  </Button>
+
+                  {fields.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-4">
+                      No itinerary added yet. Click above to add the first day.
+                    </p>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
 

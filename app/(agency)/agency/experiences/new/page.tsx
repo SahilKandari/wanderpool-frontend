@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, Controller, type Resolver } from "react-hook-form";
+import { useForm, Controller, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,12 @@ import { categoryKeys, getCategoryFields } from "@/lib/api/categories";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
+const itineraryDaySchema = z.object({
+  day: z.number().int().min(1),
+  title: z.string().min(1, "Day title is required"),
+  description: z.string().min(1, "Day description is required"),
+});
+
 const schema = z.object({
   category_id: z.string().min(1, "Select a category"),
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -43,18 +49,19 @@ const schema = z.object({
   inclusions: z.string().default(""),
   exclusions: z.string().default(""),
   metadata: z.record(z.string(), z.unknown()).default({}),
+  itinerary: z.array(itineraryDaySchema).default([]),
 });
 
 type FormData = z.infer<typeof schema>;
 
-const STEPS = ["Category", "Details", "Pricing & Policy", "Activity Info"];
+const STEPS = ["Category", "Details", "Pricing & Policy", "Activity Info", "Itinerary"];
 
 export default function NewExperiencePage() {
   const router = useRouter();
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
 
-  const { control, register, watch, setValue, trigger, setError, clearErrors, getValues, formState: { errors } } = useForm<FormData>({
+  const { control, register, watch, trigger, setError, clearErrors, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: {
       location_state: "Uttarakhand",
@@ -62,8 +69,11 @@ export default function NewExperiencePage() {
       max_participants: 20,
       cancellation_policy: "free_48h",
       metadata: {},
+      itinerary: [],
     },
   });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "itinerary" });
 
   const selectedCategory = watch("category_id");
 
@@ -79,7 +89,8 @@ export default function NewExperiencePage() {
     ["category_id"],
     ["title", "description", "location_name", "location_city"],
     ["base_price_paise", "duration_minutes"],
-    [],
+    [], // activity info — validated at submit time
+    [], // itinerary — optional
   ];
 
   const mutation = useMutation({
@@ -99,6 +110,7 @@ export default function NewExperiencePage() {
       inclusions: data.inclusions ? data.inclusions.split(",").map(s => s.trim()).filter(Boolean) : [],
       exclusions: data.exclusions ? data.exclusions.split(",").map(s => s.trim()).filter(Boolean) : [],
       metadata: data.metadata,
+      itinerary: data.itinerary,
     }),
     onSuccess: (exp) => {
       toast.success("Experience created! Now add your available slots.");
@@ -109,7 +121,6 @@ export default function NewExperiencePage() {
       if (err instanceof ApiError && err.fields) {
         const missing = Object.keys(err.fields).join(", ");
         toast.error(`Please fill in: ${missing}`, { duration: 6000 });
-        // Jump to Activity Info step where metadata fields live
         setStep(3);
       } else {
         toast.error(err.message);
@@ -118,21 +129,17 @@ export default function NewExperiencePage() {
   });
 
   async function handleNext() {
-    const fields = STEP_FIELDS[step];
-    const valid = fields.length === 0 || await trigger(fields);
+    const stepFields = STEP_FIELDS[step];
+    const valid = stepFields.length === 0 || await trigger(stepFields);
     if (valid) {
-      // Clear any stale errors (e.g. from a previous partial submit attempt)
-      // so the next step renders clean.
       clearErrors();
       setStep((s) => s + 1);
     }
   }
 
   async function handleCreate() {
-    // 1. Run zod validation on all registered fields.
     const isZodValid = await trigger();
     if (!isZodValid) {
-      // Jump to the first step that has an error.
       for (let i = 0; i < STEP_FIELDS.length; i++) {
         if (STEP_FIELDS[i].some((f) => errors[f])) {
           setStep(i);
@@ -143,7 +150,6 @@ export default function NewExperiencePage() {
       return;
     }
 
-    // 2. Client-side check for required metadata fields (dynamic, not in zod schema).
     const data = getValues();
     const missingFields = categoryFields.filter((f) => {
       if (!f.is_required) return false;
@@ -296,6 +302,70 @@ export default function NewExperiencePage() {
     /* Step 3 — Dynamic metadata */
     <div key="meta">
       <DynamicMetadataForm categoryId={selectedCategory} control={control as never} />
+    </div>,
+
+    /* Step 4 — Itinerary */
+    <div key="itinerary" className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Optionally add a day-by-day breakdown. Customers see this as an expandable itinerary on your listing page. You can skip this and add it later.
+      </p>
+      <div className="space-y-4">
+        {fields.map((field, index) => (
+          <div key={field.id} className="rounded-xl border border-border p-4 space-y-3 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
+                Day {index + 1}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                onClick={() => remove(index)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Day Title <span className="text-destructive">*</span></Label>
+              <Input
+                placeholder="e.g. Arrival & Rishikesh Exploration"
+                {...register(`itinerary.${index}.title`)}
+              />
+              {errors.itinerary?.[index]?.title && (
+                <p className="text-xs text-destructive">{errors.itinerary[index]?.title?.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Description <span className="text-destructive">*</span></Label>
+              <Textarea
+                rows={3}
+                placeholder="Describe what happens on this day…"
+                {...register(`itinerary.${index}.description`)}
+              />
+              {errors.itinerary?.[index]?.description && (
+                <p className="text-xs text-destructive">{errors.itinerary[index]?.description?.message}</p>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-dashed"
+          onClick={() => append({ day: fields.length + 1, title: "", description: "" })}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add Day {fields.length + 1}
+        </Button>
+
+        {fields.length === 0 && (
+          <p className="text-center text-xs text-muted-foreground py-2">
+            No itinerary added. You can skip this step or add days above.
+          </p>
+        )}
+      </div>
     </div>,
   ];
 
