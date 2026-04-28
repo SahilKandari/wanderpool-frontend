@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, ChevronRight, Tag } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, Tag, CornerDownRight } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,52 @@ import {
 import type { Category } from "@/lib/types/experience";
 import Link from "next/link";
 
+function ChildRows({ slug, onDelete }: { slug: string; onDelete: (c: Category) => void }) {
+  const { data: children = [], isLoading } = useQuery({
+    queryKey: categoryKeys.children(slug),
+    queryFn: () => listCategoryChildren(slug),
+  });
+
+  if (isLoading) return <div className="px-10 py-2"><Skeleton className="h-8 w-full" /></div>;
+  if (children.length === 0) return null;
+
+  return (
+    <>
+      {children.map((child) => (
+        <div key={child.id} className="flex items-center justify-between pl-10 pr-4 py-2.5 border-b last:border-0 bg-muted/20 hover:bg-muted/40">
+          <div className="flex items-center gap-3">
+            <CornerDownRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-sm font-medium">{child.name}</p>
+              <p className="text-xs text-muted-foreground">/{child.slug}</p>
+            </div>
+            {child.is_leaf ? (
+              <Badge variant="default" className="text-xs">Leaf</Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs">Group</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/admin/categories/${child.id}/fields`}>
+                Fields <ChevronRight className="ml-1 h-3 w-3" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={() => onDelete(child)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
 function CategoryRow({
   cat,
   onDelete,
@@ -36,36 +82,47 @@ function CategoryRow({
   cat: Category;
   onDelete: (c: Category) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b last:border-0 hover:bg-muted/40">
-      <div className="flex items-center gap-3">
-        <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-        <div>
-          <p className="text-sm font-medium">{cat.name}</p>
-          <p className="text-xs text-muted-foreground">/{cat.slug}</p>
+    <>
+      <div className="flex items-center justify-between px-4 py-3 border-b hover:bg-muted/40">
+        <div className="flex items-center gap-3">
+          {!cat.is_leaf ? (
+            <button onClick={() => setExpanded((v) => !v)} className="text-muted-foreground hover:text-foreground">
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+          ) : (
+            <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+          )}
+          <div>
+            <p className="text-sm font-medium">{cat.name}</p>
+            <p className="text-xs text-muted-foreground">/{cat.slug}</p>
+          </div>
+          {cat.is_leaf ? (
+            <Badge variant="default" className="text-xs">Leaf</Badge>
+          ) : (
+            <Badge variant="secondary" className="text-xs">Group</Badge>
+          )}
         </div>
-        {cat.is_leaf ? (
-          <Badge variant="default" className="text-xs">Leaf</Badge>
-        ) : (
-          <Badge variant="secondary" className="text-xs">Group</Badge>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/admin/categories/${cat.id}/fields`}>
+              Fields <ChevronRight className="ml-1 h-3 w-3" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            onClick={() => onDelete(cat)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/admin/categories/${cat.id}/fields`}>
-            Fields <ChevronRight className="ml-1 h-3 w-3" />
-          </Link>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive"
-          onClick={() => onDelete(cat)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+      {expanded && <ChildRows slug={cat.slug} onDelete={onDelete} />}
+    </>
   );
 }
 

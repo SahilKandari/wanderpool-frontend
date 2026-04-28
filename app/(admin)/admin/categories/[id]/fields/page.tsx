@@ -111,19 +111,26 @@ function buildPayload(form: FieldFormState): Partial<CategoryField> {
 
 function FieldRow({
   field,
+  categoryId,
   onEdit,
   onDelete,
 }: {
   field: CategoryField;
+  categoryId: string;
   onEdit: (f: CategoryField) => void;
   onDelete: (f: CategoryField) => void;
 }) {
+  const isInherited = field.category_id !== categoryId;
+
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b last:border-0 hover:bg-muted/30 group">
+    <div className={cn(
+      "flex items-center gap-3 px-4 py-3 border-b last:border-0 group",
+      isInherited ? "bg-muted/20" : "hover:bg-muted/30"
+    )}>
       <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium">{field.label}</span>
+          <span className={cn("text-sm font-medium", isInherited && "text-muted-foreground")}>{field.label}</span>
           <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
             {field.field_key}
           </code>
@@ -138,6 +145,9 @@ function FieldRow({
           )}
           {!field.is_public && (
             <Badge variant="outline" className="text-[10px] px-1 py-0">Internal</Badge>
+          )}
+          {isInherited && (
+            <Badge variant="secondary" className="text-[10px] px-1 py-0">Inherited</Badge>
           )}
         </div>
         <div className="flex items-center gap-3 mt-0.5">
@@ -158,24 +168,26 @@ function FieldRow({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => onEdit(field)}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-destructive hover:text-destructive"
-          onClick={() => onDelete(field)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      {!isInherited && (
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onEdit(field)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={() => onDelete(field)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -480,6 +492,7 @@ export default function CategoryFieldsPage({
                   <FieldRow
                     key={f.id}
                     field={f}
+                    categoryId={id}
                     onEdit={setEditTarget}
                     onDelete={setDeleteTarget}
                   />
