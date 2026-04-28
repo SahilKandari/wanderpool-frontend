@@ -41,6 +41,7 @@ import {
   checkReviewEligibility,
   reviewKeys,
 } from "@/lib/api/reviews";
+import { getCategoryFields, categoryKeys } from "@/lib/api/categories";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useFavourite } from "@/lib/hooks/useFavourite";
 import { cn } from "@/lib/utils";
@@ -186,6 +187,14 @@ export default function ExperienceDetailClient({
     queryFn: () => listExperienceSlots(exp!.id, bookingDate),
     enabled: !!exp?.id && bookingDate !== "",
   });
+
+  // Fetch category fields to display activity-specific metadata
+  const { data: categoryFields = [] } = useQuery({
+    queryKey: categoryKeys.fields(exp?.category_id ?? ""),
+    queryFn: () => getCategoryFields(exp!.category_id),
+    enabled: !!exp?.category_id,
+  });
+  const publicFields = categoryFields.filter((f) => f.is_public);
 
   // Scroll-spy: track which section is in view
   useEffect(() => {
@@ -572,6 +581,75 @@ export default function ExperienceDetailClient({
                 </div>
               </section>
             )}
+
+            {/* ── Activity Details (metadata) ────────────────────────────── */}
+            {(() => {
+              const groups = publicFields.reduce<Record<string, typeof publicFields>>((acc, f) => {
+                const g = f.group_name ?? "Details";
+                (acc[g] ??= []).push(f);
+                return acc;
+              }, {});
+              const hasAnyValue = publicFields.some((f) => {
+                const v = exp.metadata?.[f.field_key];
+                return v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
+              });
+              if (!hasAnyValue) return null;
+              return (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 bg-white">
+                    <Info className="h-4 w-4 text-slate-600 shrink-0" />
+                    <h2 className="text-sm font-semibold text-slate-900">Activity Details</h2>
+                  </div>
+                  <div className="p-4 space-y-5">
+                    {Object.entries(groups).map(([group, fields]) => {
+                      const visibleFields = fields.filter((f) => {
+                        const v = exp.metadata?.[f.field_key];
+                        return v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
+                      });
+                      if (visibleFields.length === 0) return null;
+                      return (
+                        <div key={group}>
+                          {Object.keys(groups).length > 1 && (
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">{group}</p>
+                          )}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {visibleFields.map((f) => {
+                              const v = exp.metadata?.[f.field_key];
+                              let display: React.ReactNode;
+                              if (f.field_type === "boolean") {
+                                display = v ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Yes</span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">No</span>
+                                );
+                              } else if (f.field_type === "string_array" && Array.isArray(v)) {
+                                display = (
+                                  <div className="flex flex-wrap gap-1">
+                                    {(v as string[]).map((item, i) => (
+                                      <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              } else {
+                                display = <span className="text-sm font-medium text-slate-800">{String(v)}</span>;
+                              }
+                              return (
+                                <div key={f.field_key} className="space-y-1">
+                                  <p className="text-xs text-slate-500">{f.label}</p>
+                                  {display}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* ── Meeting point ──────────────────────────────────────────── */}
             {exp.meeting_point && (
