@@ -8,6 +8,7 @@ import { Menu, X, Mountain, Search, User, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { listPublicExperiences } from "@/lib/api/experiences";
+import { toCitySlug } from "@/lib/api/destinations";
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -44,7 +45,7 @@ function Navbar() {
   const navLinks = [
     { href: "/experiences", label: "Explore" },
     ...topCities.map((city) => ({
-      href: `/experiences?city=${encodeURIComponent(city)}`,
+      href: `/destinations/${toCitySlug(city)}`,
       label: city,
     })),
   ];
