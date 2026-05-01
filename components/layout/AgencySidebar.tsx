@@ -14,10 +14,10 @@ import {
   Clock,
   Star,
   ClipboardList,
-  Mountain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
+import { Logo } from "@/components/shared/Logo";
 
 interface NavItem {
   label: string;
@@ -53,16 +53,8 @@ export function AgencySidebar({ mobile = false, onNavClick }: { mobile?: boolean
   return (
     <aside className={mobile ? "flex flex-col w-64 border-r border-border bg-white" : "hidden lg:flex lg:flex-col w-64 border-r border-border bg-white"}>
       {/* Logo */}
-      <Link href="/" className="flex h-16 items-center gap-3 px-6 border-b border-border hover:bg-slate-50 transition-colors">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/30">
-          <Mountain className="h-4 w-4 text-white" />
-        </div>
-        <div>
-          <p className="font-bold text-sm leading-none text-foreground">WanderPool</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {role === "operator" ? "Guide Portal" : isSoloOperator ? "Solo Operator Portal" : "Agency Portal"}
-          </p>
-        </div>
+      <Link href="/" className="flex h-16 items-center px-5 border-b border-border hover:bg-slate-50 transition-colors">
+        <Logo variant="full-light" className="w-36" />
       </Link>
 
       {/* Nav */}

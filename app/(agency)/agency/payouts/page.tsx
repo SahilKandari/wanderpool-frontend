@@ -37,7 +37,7 @@ function payoutStatusStyle(status: BookingPayout["payout_status"]) {
     case "paid":           return "bg-emerald-50 text-emerald-700 border-emerald-200";
     case "pending":        return "bg-amber-50 text-amber-700 border-amber-200";
     case "not_due":        return "bg-slate-50 text-slate-500 border-slate-200";
-    case "direct_payment": return "bg-blue-50 text-blue-600 border-blue-200";
+    case "direct_payment": return "bg-primary/5 text-primary border-primary/20";
   }
 }
 
@@ -130,7 +130,7 @@ export default function AgencyPayoutsPage() {
             <span className="text-sm font-medium">Direct Received</span>
           </div>
           {isLoading ? <Skeleton className="h-7 w-28" /> : (
-            <p className="text-2xl font-bold text-blue-600">{paiseToCurrency(totalDirectReceived)}</p>
+            <p className="text-2xl font-bold text-primary">{paiseToCurrency(totalDirectReceived)}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">Collected directly from customer</p>
         </div>
@@ -208,7 +208,7 @@ export default function AgencyPayoutsPage() {
               </div>
               <p className="text-sm font-medium text-slate-900 truncate">{p.experience_title}</p>
               <div className="flex items-center justify-between">
-                <p className={cn("text-xl font-bold", p.payout_status === "direct_payment" ? "text-blue-600" : "text-slate-900")}>
+                <p className={cn("text-xl font-bold", p.payout_status === "direct_payment" ? "text-primary" : "text-slate-900")}>
                   {paiseToCurrency(p.operator_payout_paise)}
                   {p.payout_status === "direct_payment" && (
                     <span className="text-xs font-normal text-muted-foreground ml-1">(direct)</span>
@@ -269,12 +269,12 @@ export default function AgencyPayoutsPage() {
                   <TableCell className="text-sm">
                     {paiseToCurrency(p.amount_paid_paise)}
                     {p.payment_mode === "partial" && (
-                      <span className="text-xs text-blue-600 ml-1">(partial)</span>
+                      <span className="text-xs text-primary ml-1">(partial)</span>
                     )}
                   </TableCell>
                   <TableCell className="font-semibold text-sm">
                     {p.payout_status === "direct_payment" ? (
-                      <span className="text-blue-600">
+                      <span className="text-primary">
                         {paiseToCurrency(p.operator_payout_paise)}
                         <span className="text-xs font-normal text-muted-foreground ml-1">(direct)</span>
                       </span>

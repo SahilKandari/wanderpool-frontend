@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {topStats.map(({ title, value, loading, icon: Icon, href }) => (
           <Link href={href} key={title}>
-            <Card className="hover:border-indigo-300 transition-colors cursor-pointer">
+            <Card className="hover:border-primary/40 transition-colors cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />

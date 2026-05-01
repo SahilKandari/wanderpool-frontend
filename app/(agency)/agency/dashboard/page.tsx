@@ -241,25 +241,25 @@ export default function AgencyDashboardPage() {
         </div>
       )}
       {onboardingDone && !allGatesCleared && (
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800">
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/20 text-[#085041]">
           <ClipboardList className="h-5 w-5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Documents under review</p>
             <p className="text-xs mt-0.5">Our team is verifying your documents. You&apos;ll be notified once all gates are cleared.</p>
           </div>
-          <Button size="sm" variant="outline" asChild className="shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100">
+          <Button size="sm" variant="outline" asChild className="shrink-0 border-primary/30 text-primary hover:bg-primary/10">
             <Link href="/agency/onboarding">View Status</Link>
           </Button>
         </div>
       )}
       {isSoloOperator && (
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-violet-800">
-          <Users className="h-5 w-5 shrink-0 text-violet-700" />
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+          <Users className="h-5 w-5 shrink-0 text-amber-700" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-violet-900">Scale up to an Agency</p>
-            <p className="text-xs text-violet-700 mt-0.5">Invite guides, assign bookings to your team, and grow beyond yourself.</p>
+            <p className="text-sm font-semibold text-amber-900">Scale up to an Agency</p>
+            <p className="text-xs text-amber-700 mt-0.5">Invite guides, assign bookings to your team, and grow beyond yourself.</p>
           </div>
-          <Button size="sm" onClick={() => setUpgradeOpen(true)} className="shrink-0 bg-violet-600 hover:bg-violet-700 text-white border-0">
+          <Button size="sm" onClick={() => setUpgradeOpen(true)} className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white border-0">
             Upgrade
           </Button>
         </div>
@@ -500,7 +500,7 @@ export default function AgencyDashboardPage() {
               Cancel
             </Button>
             <Button
-              className="bg-violet-600 hover:bg-violet-700"
+              className="bg-amber-600 hover:bg-amber-700"
               disabled={upgradeLoading}
               onClick={handleUpgrade}
             >

@@ -210,7 +210,7 @@ function BookingDetailDialog({
               </Badge>
             )}
             {booking.activity_started_at && !booking.activity_completed_at && (
-              <Badge className="bg-blue-100 text-blue-800 border-blue-200 gap-1">
+              <Badge className="bg-primary/10 text-primary border-primary/20 gap-1">
                 <Play className="h-3 w-3" />Activity In Progress
               </Badge>
             )}
@@ -609,8 +609,8 @@ export default function AgencyBookingsPage() {
       />
 
       {isSoloOperator && (
-        <div className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-500" />
+        <div className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/10 text-xs text-primary">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
           Mark confirmed bookings as started and complete to trigger your payout.
         </div>
       )}
@@ -830,7 +830,7 @@ export default function AgencyBookingsPage() {
                         <CheckCheck className="h-3 w-3" />Completed
                       </Badge>
                     ) : b.activity_started_at ? (
-                      <Badge variant="outline" className="text-blue-700 border-blue-200 bg-blue-50 gap-1 text-xs">
+                      <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 gap-1 text-xs">
                         <Play className="h-3 w-3" />In Progress
                       </Badge>
                     ) : b.status === "confirmed" ? (
@@ -852,7 +852,7 @@ export default function AgencyBookingsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 px-2 text-blue-600 hover:text-blue-700"
+                          className="h-8 px-2 text-primary hover:text-primary/80"
                           disabled={startMutation.isPending || hasCashPending(b)}
                           title={hasCashPending(b) ? "Collect cash first before starting" : undefined}
                           onClick={() => startMutation.mutate(b.id)}

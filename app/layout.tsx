@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,6 +11,13 @@ import "./globals.css";
 const geist = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -63,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${geist.variable} ${playfair.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full bg-background text-foreground" suppressHydrationWarning>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJsonLd }} />
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />

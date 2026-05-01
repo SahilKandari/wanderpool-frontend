@@ -105,8 +105,8 @@ export default function SafetyPage() {
         <div className="space-y-6">
           <div className="p-6 rounded-2xl border border-slate-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                <Waves className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-xl bg-primary/5 flex items-center justify-center">
+                <Waves className="h-5 w-5 text-primary" />
               </div>
               <h3 className="font-semibold text-slate-900">River Rafting</h3>
             </div>
@@ -189,8 +189,8 @@ export default function SafetyPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-4 p-5 bg-blue-50 border border-blue-100 rounded-2xl">
-            <ShieldCheck className="h-6 w-6 text-blue-500 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-4 p-5 bg-primary/5 border border-primary/10 rounded-2xl">
+            <ShieldCheck className="h-6 w-6 text-primary shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-slate-900 mb-1">Weather cancellations</h3>
               <p className="text-sm text-slate-600">

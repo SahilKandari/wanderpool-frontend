@@ -34,7 +34,7 @@ function payoutStatusStyle(status: BookingPayout["payout_status"]) {
     case "paid":           return "bg-emerald-50 text-emerald-700 border-emerald-200";
     case "pending":        return "bg-amber-50 text-amber-700 border-amber-200";
     case "not_due":        return "bg-slate-50 text-slate-500 border-slate-200";
-    case "direct_payment": return "bg-blue-50 text-blue-600 border-blue-200";
+    case "direct_payment": return "bg-primary/5 text-primary border-primary/20";
   }
 }
 
@@ -126,7 +126,7 @@ export default function AdminPayoutsPage() {
           { label: "Pending Amount", value: paiseToCurrency(totalPending), color: "text-amber-600", icon: Clock },
           { label: "Paid Out", value: paiseToCurrency(totalPaid), color: "text-emerald-600", icon: CheckCircle2 },
           { label: "Awaiting Action", value: `${pendingCount} booking${pendingCount !== 1 ? "s" : ""}`, color: "text-foreground", icon: IndianRupee },
-          { label: "Direct Paid", value: paiseToCurrency(totalDirectPaid), color: "text-blue-600", icon: Banknote },
+          { label: "Direct Paid", value: paiseToCurrency(totalDirectPaid), color: "text-primary", icon: Banknote },
         ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} className="bg-card rounded-xl border p-5">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -294,12 +294,12 @@ export default function AdminPayoutsPage() {
                   <TableCell className="text-sm">
                     {paiseToCurrency(p.amount_paid_paise)}
                     {p.payment_mode === "partial" && (
-                      <span className="text-xs text-blue-600 ml-1">(partial)</span>
+                      <span className="text-xs text-primary ml-1">(partial)</span>
                     )}
                   </TableCell>
                   <TableCell className="font-semibold text-sm">
                     {p.payout_status === "direct_payment" ? (
-                      <span className="text-blue-600">
+                      <span className="text-primary">
                         {paiseToCurrency(p.operator_payout_paise)}
                         <span className="text-xs font-normal text-muted-foreground ml-1">(direct)</span>
                       </span>

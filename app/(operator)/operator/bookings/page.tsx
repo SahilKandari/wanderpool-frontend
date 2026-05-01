@@ -228,8 +228,8 @@ function BookingCard({
             </Button>
           )}
           {canComplete && confirmComplete && (
-            <div className="w-full rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
-              <p className="text-xs font-medium text-blue-800">
+            <div className="w-full rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <p className="text-xs font-medium text-[#085041]">
                 Confirm the activity for {booking.customer_name} is fully completed?
               </p>
               <div className="flex gap-2">

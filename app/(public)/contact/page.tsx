@@ -58,7 +58,7 @@ export default function ContactPage() {
       {/* Hero */}
       <div className="bg-slate-900 py-16 px-4">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 bg-[#1D9E75]/20 text-[#5DCAA5] border border-[#1D9E75]/30 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
             <Mail className="h-3.5 w-3.5" />
             We're here to help
           </div>
@@ -77,8 +77,8 @@ export default function ContactPage() {
               <h2 className="text-xl font-bold text-slate-900 mb-5">Get in touch</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                    <Mail className="h-4 w-4 text-blue-600" />
+                  <div className="h-9 w-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
+                    <Mail className="h-4 w-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Email (Primary)</p>

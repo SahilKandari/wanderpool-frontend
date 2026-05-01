@@ -698,12 +698,12 @@ export default function ExperienceDetailClient({
             </div>
 
             {/* ── Important info ─────────────────────────────────────────── */}
-            <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
               <div className="flex items-start gap-3">
-                <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-blue-900 mb-1">Good to know</p>
-                  <ul className="text-sm text-blue-800 space-y-1">
+                  <p className="text-sm font-semibold text-[#085041] mb-1">Good to know</p>
+                  <ul className="text-sm text-[#085041]/80 space-y-1">
                     <li>• Booking confirmation via email within 30 minutes</li>
                     <li>• Guide will contact you 48 hours before the activity</li>
                     <li>• Weather-dependent activity — cancellations due to safety are fully refunded</li>

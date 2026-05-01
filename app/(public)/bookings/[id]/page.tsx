@@ -352,9 +352,9 @@ export default function BookingDetailPage({
 
           {/* Cancellation policy info */}
           {canCancel && (
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
-              <Shield className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-blue-800">
+            <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex items-start gap-3">
+              <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <p className="text-sm text-[#085041]">
                 Weather-dependent activities are fully refunded if cancelled by the operator for safety reasons.
               </p>
             </div>

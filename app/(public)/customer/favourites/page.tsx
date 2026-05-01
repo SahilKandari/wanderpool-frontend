@@ -81,7 +81,7 @@ function FavouriteCard({ exp }: { exp: FavouriteExperience }) {
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-indigo-400 to-violet-500 flex items-center justify-center">
+            <div className="w-full h-full bg-linear-to-br from-[#0F6E56] to-[#1D9E75] flex items-center justify-center">
               <Mountain className="h-16 w-16 text-white/30" />
             </div>
           )}

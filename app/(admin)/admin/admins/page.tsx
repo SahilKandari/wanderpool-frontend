@@ -80,7 +80,7 @@ type AddAdminForm = z.infer<typeof addAdminSchema>;
 function RoleBadge({ role }: { role: string }) {
   if (role === "super_admin") {
     return (
-      <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200 border hover:bg-indigo-100">
+      <Badge className="bg-primary/10 text-primary border-primary/20 border hover:bg-primary/10">
         Super Admin
       </Badge>
     );

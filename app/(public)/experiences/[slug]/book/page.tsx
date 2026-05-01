@@ -173,9 +173,10 @@ export default function BookPage({
         currency: "INR",
         name: "WanderPool",
         description: exp.title,
+        image: "https://wanderpool.com/wp-icon.svg",
         order_id: initRes.razorpay_order_id,
         prefill: { email: user?.email ?? "" },
-        theme: { color: "#16a34a" },
+        theme: { color: "#1D9E75" },
         handler: async (response: {
           razorpay_payment_id: string;
           razorpay_order_id: string;

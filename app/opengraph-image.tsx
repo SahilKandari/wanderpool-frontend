@@ -10,7 +10,7 @@ export default function OgImage() {
     (
       <div
         style={{
-          background: "linear-gradient(135deg, #4f46e5 0%, #1e1b4b 100%)",
+          background: "linear-gradient(135deg, #085041 0%, #0F6E56 100%)",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -34,7 +34,7 @@ export default function OgImage() {
         <div
           style={{
             fontSize: 34,
-            color: "#a5b4fc",
+            color: "#E1F5EE",
             textAlign: "center",
             maxWidth: 700,
           }}
@@ -44,7 +44,7 @@ export default function OgImage() {
         <div
           style={{
             fontSize: 26,
-            color: "#10b981",
+            color: "#EF9F27",
             marginTop: 36,
             letterSpacing: "2px",
           }}

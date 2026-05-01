@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Mountain, Search, User, Heart } from "lucide-react";
+import { Menu, X, Search, User, Heart } from "lucide-react";
+import { Logo } from "@/components/shared/Logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { listPublicExperiences } from "@/lib/api/experiences";
@@ -62,16 +63,8 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30 group-hover:scale-110 transition-transform">
-              <Mountain className="h-4 w-4 text-white" />
-            </div>
-            <span className={cn(
-              "font-bold text-lg tracking-tight transition-colors",
-              scrolled || !isHome ? "text-foreground" : "text-white"
-            )}>
-              WanderPool
-            </span>
+          <Link href="/" className="flex items-center group hover:opacity-90 transition-opacity">
+            <Logo variant={scrolled || !isHome ? "full-light" : "full-dark"} />
           </Link>
 
           {/* Desktop nav */}
@@ -221,11 +214,8 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
-                <Mountain className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-bold text-white text-lg">WanderPool</span>
+            <div className="mb-4">
+              <Logo variant="full-dark" />
             </div>
             <p className="text-sm leading-relaxed max-w-xs">
               India's premier adventure experience marketplace. Discover and book authentic outdoor adventures in the Himalayas.

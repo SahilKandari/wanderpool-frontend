@@ -55,8 +55,8 @@ function initials(name: string) {
 
 function avatarColor(name: string) {
   const colors = [
-    "bg-indigo-500", "bg-violet-500", "bg-pink-500",
-    "bg-teal-500", "bg-orange-500", "bg-cyan-500",
+    "bg-[#085041]", "bg-[#0F6E56]", "bg-pink-500",
+    "bg-[#1D9E75]", "bg-amber-500", "bg-[#5DCAA5]",
   ];
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % colors.length;

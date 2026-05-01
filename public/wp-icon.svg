@@ -1,15 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Dark teal circle background -->
   <circle cx="100" cy="100" r="100" fill="#085041"/>
+
+  <!-- Three mountain peaks -->
   <polygon points="44,132 76,68 108,132" fill="#1D9E75"/>
   <polygon points="68,132 100,44 132,132" fill="#0F6E56"/>
   <polygon points="92,132 120,88 148,132" fill="#5DCAA5"/>
+
+  <!-- Snow caps -->
   <polygon points="76,68 66,92 86,92" fill="#E1F5EE" opacity="0.9"/>
   <polygon points="100,44 88,76 112,76" fill="white" opacity="0.95"/>
   <polygon points="120,88 112,104 128,104" fill="#E1F5EE" opacity="0.85"/>
+
+  <!-- Amber peak dot on tallest mountain -->
   <circle cx="100" cy="44" r="7" fill="#EF9F27"/>
+
+  <!-- Water line -->
   <line x1="28" y1="136" x2="172" y2="136" stroke="#5DCAA5" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- Reflection (faded, inverted) -->
   <polygon points="44,140 76,172 108,140" fill="#1D9E75" opacity="0.12"/>
   <polygon points="68,140 100,176 132,140" fill="#0F6E56" opacity="0.10"/>
+
+  <!-- Ripple ellipses -->
   <ellipse cx="100" cy="136" rx="20" ry="7" stroke="#5DCAA5" stroke-width="2" fill="none" opacity="0.5"/>
   <ellipse cx="100" cy="136" rx="40" ry="12" stroke="#5DCAA5" stroke-width="1.5" fill="none" opacity="0.3"/>
 </svg>

@@ -35,9 +35,9 @@ interface TopbarProps {
 }
 
 const roleLabel: Record<string, { label: string; color: string }> = {
-  agency:         { label: "Agency",        color: "bg-indigo-100 text-indigo-700" },
-  solo_operator:  { label: "Solo Operator", color: "bg-violet-100 text-violet-700" },
-  operator:       { label: "Guide",         color: "bg-teal-100 text-teal-700" },
+  agency:         { label: "Agency",        color: "bg-primary/10 text-primary" },
+  solo_operator:  { label: "Solo Operator", color: "bg-amber-100 text-amber-700" },
+  operator:       { label: "Guide",         color: "bg-[#E1F5EE] text-[#085041]" },
   super_admin:    { label: "Super Admin",   color: "bg-red-100 text-red-700" },
   support_agent:  { label: "Support",       color: "bg-amber-100 text-amber-700" },
   admin:          { label: "Admin",         color: "bg-slate-100 text-slate-700" },
@@ -46,7 +46,7 @@ const roleLabel: Record<string, { label: string; color: string }> = {
 const NOTIF_ICONS: Record<string, React.ReactNode> = {
   "booking.created":   <BookOpen className="h-3.5 w-3.5 text-emerald-600" />,
   "booking.cancelled": <XCircle className="h-3.5 w-3.5 text-red-500" />,
-  "guide.assigned":    <UserCheck className="h-3.5 w-3.5 text-blue-600" />,
+  "guide.assigned":    <UserCheck className="h-3.5 w-3.5 text-primary" />,
 };
 
 function NotificationItem({
@@ -66,7 +66,7 @@ function NotificationItem({
       onClick={() => onRead(notif.id, notif.link)}
       className={cn(
         "w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors",
-        !notif.is_read && (isAdmin ? "bg-slate-800 hover:bg-slate-700" : "bg-blue-50/60 hover:bg-blue-50")
+        !notif.is_read && (isAdmin ? "bg-slate-800 hover:bg-slate-700" : "bg-primary/5 hover:bg-primary/10")
       )}
     >
       <div className={cn(
@@ -94,7 +94,7 @@ function NotificationItem({
         </p>
       </div>
       {!notif.is_read && (
-        <div className="mt-1.5 shrink-0 h-2 w-2 rounded-full bg-blue-500" />
+        <div className="mt-1.5 shrink-0 h-2 w-2 rounded-full bg-primary" />
       )}
     </button>
   );
@@ -168,7 +168,7 @@ export function Topbar({ onMenuClick, variant = "default" }: TopbarProps) {
             <p className={cn("text-sm font-semibold", isAdmin ? "text-white" : "text-slate-900")}>
               Notifications
               {unreadCount > 0 && (
-                <span className="ml-2 text-xs font-medium text-blue-500">{unreadCount} new</span>
+                <span className="ml-2 text-xs font-medium text-primary">{unreadCount} new</span>
               )}
             </p>
             {unreadCount > 0 && (
@@ -214,7 +214,7 @@ export function Topbar({ onMenuClick, variant = "default" }: TopbarProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className={cn("flex items-center gap-2.5 px-2 h-10 rounded-lg", isAdmin ? "hover:bg-slate-800" : "hover:bg-slate-50")}>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className={cn("text-xs font-bold", isAdmin ? "bg-indigo-600 text-white" : "bg-primary/10 text-primary")}>
+              <AvatarFallback className={cn("text-xs font-bold", isAdmin ? "bg-primary text-white" : "bg-primary/10 text-primary")}>
                 {initials}
               </AvatarFallback>
             </Avatar>

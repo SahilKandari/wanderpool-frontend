@@ -50,7 +50,7 @@ const CAT_COLORS: Record<string, string> = {
   "aerial": "from-violet-500 to-purple-400",
   "camping": "from-amber-500 to-orange-400",
   "yoga-wellness": "from-rose-500 to-pink-400",
-  "sightseeing": "from-indigo-500 to-blue-400",
+  "sightseeing": "from-[#0F6E56] to-[#1D9E75]",
 };
 
 // ── Stat counter ──────────────────────────────────────────────────────────────
@@ -498,7 +498,7 @@ export default function HomePage() {
             },
             {
               icon: Clock,
-              color: "bg-blue-50 text-blue-600",
+              color: "bg-primary/5 text-primary",
               title: "Instant Confirmation",
               desc: "Get your booking confirmed instantly via WhatsApp with the guide's contact and meeting point.",
             },
@@ -543,8 +543,8 @@ export default function HomePage() {
             {[
               {
                 icon: Building2,
-                color: "bg-indigo-50 text-indigo-600",
-                accent: "border-indigo-200",
+                color: "bg-primary/5 text-primary",
+                accent: "border-primary/20",
                 title: "Travel Agency",
                 tag: "Multiple guides",
                 desc: "Manage your entire team from one dashboard. Create listings, assign bookings to guides, track payouts, and grow your brand.",
@@ -623,7 +623,7 @@ export default function HomePage() {
           initial={{ opacity: 0, scale: 0.97 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-primary via-indigo-600 to-violet-700 p-12 text-center"
+          className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#085041] via-primary to-[#1D9E75] p-12 text-center"
         >
           {/* Decorative circles */}
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-white/5" />
