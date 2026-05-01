@@ -180,12 +180,23 @@ export default function ForOperatorsPage() {
       <div className="py-16 px-4 text-center">
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Ready to grow your bookings?</h2>
         <p className="text-slate-500 mb-6">Join WanderPool and start reaching thousands of adventure seekers today.</p>
-        <Link
-          href="/agency/register"
-          className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-        >
-          Register as an operator — free <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/agency/register"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+          >
+            Register as an operator — free <ArrowRight className="h-4 w-4" />
+          </Link>
+          <a
+            href="/operator-onboarding-guide.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            View Onboarding Guide
+          </a>
+        </div>
         <p className="text-xs text-slate-400 mt-3">No setup fees · No monthly subscriptions until you scale</p>
       </div>
     </div>

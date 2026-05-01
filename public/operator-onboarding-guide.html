@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operator Onboarding Guide — WanderPool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1D9E75;
+      --primary-dark: #0F6E56;
+      --primary-darker: #085041;
+      --primary-light: #5DCAA5;
+      --primary-bg: #E1F5EE;
+      --amber: #EF9F27;
+      --text: #1a1a2e;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8f7f4;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Cover page ─────────────────────────────────────────── */
+    .cover {
+      background: linear-gradient(135deg, var(--primary-darker) 0%, var(--primary-dark) 50%, var(--primary) 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      text-align: center;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+    }
+
+    .cover-logo {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 40px;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 6px 18px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover h1 em {
+      font-style: italic;
+      color: var(--primary-light);
+    }
+
+    .cover p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.75);
+      max-width: 480px;
+      margin: 0 auto 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover-url {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 14px 28px;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .cover-url span {
+      color: var(--primary-light);
+    }
+
+    a { color: inherit; }
+    a.link-teal { color: var(--primary-dark); font-weight: 600; }
+    a.link-white { color: rgba(255,255,255,0.85); }
+
+    .cover-footer {
+      position: absolute;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: rgba(255,255,255,0.4);
+      font-size: 11px;
+      z-index: 1;
+    }
+
+    /* ── Page layout ────────────────────────────────────────── */
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 40px;
+      page-break-inside: avoid;
+    }
+
+    .page-break { page-break-before: always; }
+
+    /* ── Section headers ────────────────────────────────────── */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary-dark);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .section-label .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--amber);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+
+    /* ── Step cards ─────────────────────────────────────────── */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step-card {
+      display: flex;
+      gap: 20px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .step-card:last-child {
+      border-bottom: none;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-bg);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-content p {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-top: 4px;
+    }
+
+    .step-note {
+      display: inline-block;
+      background: var(--amber);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin-top: 8px;
+    }
+
+    /* ── Info grid ──────────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .info-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .info-card .icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .info-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .info-card p {
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    /* ── Checklist ──────────────────────────────────────────── */
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13.5px;
+    }
+
+    .check {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .check svg {
+      width: 12px;
+      height: 12px;
+      stroke: var(--primary-dark);
+      stroke-width: 2.5;
+      fill: none;
+    }
+
+    /* ── Highlight box ──────────────────────────────────────── */
+    .highlight-box {
+      background: var(--primary-bg);
+      border: 1px solid var(--primary-light);
+      border-left: 4px solid var(--primary);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 24px 0;
+    }
+
+    .highlight-box h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+
+    .highlight-box p {
+      color: var(--primary-darker);
+      font-size: 13px;
+    }
+
+    /* ── Stats strip ────────────────────────────────────────── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--primary-darker);
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 32px 0;
+    }
+
+    .stat-item {
+      padding: 24px 16px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-item .val {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .stat-item .val em {
+      font-style: italic;
+      color: var(--primary-light);
+    }
+
+    .stat-item .lbl {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 4px;
+    }
+
+    /* ── Process timeline ───────────────────────────────────── */
+    .timeline {
+      position: relative;
+      margin: 28px 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 20px;
+      padding: 0 0 28px 0;
+      position: relative;
+    }
+
+    .timeline-item:last-child { padding-bottom: 0; }
+
+    .timeline-dot {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-dot.amber { background: var(--amber); }
+    .timeline-dot.light { background: var(--primary-light); }
+
+    .timeline-body h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      padding-top: 8px;
+    }
+
+    .timeline-body p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ── Earnings table ─────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--primary-bg);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    .tag-green { background: var(--primary-bg); color: var(--primary-dark); }
+    .tag-amber { background: #FEF3C7; color: #92400E; }
+
+    /* ── CTA section ────────────────────────────────────────── */
+    .cta-section {
+      background: linear-gradient(135deg, var(--primary-darker) 0%, var(--primary) 100%);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      margin: 40px 0 0;
+    }
+
+    .cta-section h2 {
+      color: white;
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+
+    .cta-section p {
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+
+    .cta-url {
+      display: inline-block;
+      background: white;
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 12px;
+      padding: 14px 32px;
+    }
+
+    .support-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+      justify-content: center;
+    }
+
+    .support-item {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 12px 20px;
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* ── Footer bar ─────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      padding: 24px 40px 32px;
+      color: var(--muted);
+      font-size: 11.5px;
+      border-top: 1px solid var(--border);
+      margin-top: 32px;
+    }
+
+    .footer a { color: var(--primary-dark); font-weight: 600; text-decoration: none; }
+
+    /* ── Print ──────────────────────────────────────────────── */
+    @media print {
+      body { background: white; }
+      .cover { page-break-after: always; }
+      .page-break { page-break-before: always; }
+      @page { margin: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER PAGE
+═══════════════════════════════════════════════════════════ -->
+<div class="cover">
+
+  <!-- Logo SVG -->
+  <div class="cover-logo">
+    <svg width="200" height="62" viewBox="0 0 310 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="34,60 54,22 74,60" fill="#1D9E75"/>
+      <polygon points="50,60 74,12 98,60" fill="#0F6E56"/>
+      <polygon points="72,60 90,36 108,60" fill="#5DCAA5"/>
+      <polygon points="54,22 48,36 60,36" fill="#E1F5EE" opacity="0.9"/>
+      <polygon points="74,12 66,30 82,30" fill="white" opacity="0.95"/>
+      <polygon points="90,36 85,46 95,46" fill="#E1F5EE" opacity="0.85"/>
+      <circle cx="74" cy="12" r="3.5" fill="#EF9F27"/>
+      <line x1="20" y1="62" x2="118" y2="62" stroke="#1D9E75" stroke-width="1.2" opacity="0.5"/>
+      <polygon points="34,64 54,88 74,64" fill="#1D9E75" opacity="0.12"/>
+      <polygon points="50,64 74,96 98,64" fill="#0F6E56" opacity="0.10"/>
+      <ellipse cx="71" cy="62" rx="10" ry="3.5" stroke="#1D9E75" stroke-width="0.9" fill="none" opacity="0.4"/>
+      <ellipse cx="71" cy="62" rx="20" ry="6" stroke="#1D9E75" stroke-width="0.65" fill="none" opacity="0.25"/>
+      <text x="128" y="44" font-family="'Playfair Display',Georgia,serif" font-size="30" font-weight="700" fill="white">Wander</text>
+      <text x="128" y="74" font-family="'Playfair Display',Georgia,serif" font-size="30" font-weight="400" font-style="italic" fill="#5DCAA5">Pool</text>
+    </svg>
+  </div>
+
+  <div class="cover-badge">OPERATOR ONBOARDING GUIDE</div>
+
+  <h1>Everything you need to<br/><em>start earning</em> with us</h1>
+
+  <p>A step-by-step guide to listing your adventure experiences on WanderPool — India's trusted outdoor marketplace, starting with Uttarakhand.</p>
+
+  <a href="https://wanderpool.com/agency/register" class="cover-url" target="_blank">
+    Register free at&nbsp; <span>wanderpool.com/agency/register</span>
+  </a>
+
+  <div class="cover-footer">
+    <a href="https://wanderpool.com" class="link-white" target="_blank">wanderpool.com</a> &nbsp;·&nbsp;
+    <a href="mailto:support@wanderpool.com" class="link-white">support@wanderpool.com</a> &nbsp;·&nbsp; Uttarakhand, India
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 1 — Why WanderPool + Key Numbers
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <div class="section-label"><span class="dot"></span> ABOUT US</div>
+  <h2>Why list on WanderPool?</h2>
+  <p class="subtitle">We handle discovery, bookings &amp; payments. You run the adventure.</p>
+
+  <div class="stats-strip">
+    <div class="stat-item">
+      <div class="val">85–<em>88%</em></div>
+      <div class="lbl">Payout per booking</div>
+    </div>
+    <div class="stat-item">
+      <div class="val"><em>₹0</em></div>
+      <div class="lbl">Setup or listing fee</div>
+    </div>
+    <div class="stat-item">
+      <div class="val">3 <em>days</em></div>
+      <div class="lbl">Payout after activity</div>
+    </div>
+    <div class="stat-item">
+      <div class="val">15 <em>min</em></div>
+      <div class="lbl">Support response</div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="icon">🏔️</div>
+      <h4>Uttarakhand-first focus</h4>
+      <p>We're built for adventure operators in Rishikesh, Mussoorie, and surrounding areas. Not a generic platform — your customers are our audience.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">💸</div>
+      <h4>Transparent payouts</h4>
+      <p>You see exactly what you earn per booking. Payouts hit your registered bank account within 3 business days of activity completion. No surprises.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">📲</div>
+      <h4>Your own dashboard</h4>
+      <p>Manage slots, view bookings, assign guides, track earnings — all from a simple web dashboard. No app install needed.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">🛡️</div>
+      <h4>Verified badge</h4>
+      <p>Verified operators get a badge on every listing, boosting trust with customers who care about safety — especially for rafting, trekking, and paragliding.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h4>How the commission works</h4>
+    <p>WanderPool keeps 12–15% of each booking as a platform fee. You receive 85–88%. GST is collected from the customer and passed through — it's never deducted from your payout. There are no monthly fees during onboarding.</p>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 2 — Onboarding Steps
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="section-label"><span class="dot"></span> STEP-BY-STEP</div>
+  <h2>How to get started</h2>
+  <p class="subtitle">From signup to your first booking in 4 simple steps.</p>
+
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="timeline-dot">1</div>
+      <div class="timeline-body">
+        <h4>Create your account</h4>
+        <p>Go to <a href="https://wanderpool.com/agency/register" class="link-teal" target="_blank">wanderpool.com/agency/register</a> and fill in your business name, email, and phone. Takes under 2 minutes. No payment required.</p>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot amber">2</div>
+      <div class="timeline-body">
+        <h4>Complete KYC &amp; Verification</h4>
+        <p>Upload your Aadhaar/PAN, bank account details for payouts, and any required safety certifications (e.g. AIRI cert for rafting, APPI/DGCA for paragliding). Our team reviews and verifies within <strong>1–2 business days</strong>.</p>
+        <span class="tag tag-amber">Required before going live</span>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot light">3</div>
+      <div class="timeline-body">
+        <h4>Create your first experience listing</h4>
+        <p>Add your activity details — title, description, photos (min. 5 real photos), duration, inclusions, pricing, and cancellation policy. Our category system auto-generates the form fields for your activity type.</p>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot">4</div>
+      <div class="timeline-body">
+        <h4>Set your available slots</h4>
+        <p>Use the Slot Manager to add dates, time slots, and group sizes. You can create recurring slots in bulk (e.g. every day 9 AM–12 PM, capacity 20). Customers can only book available slots.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="highlight-box">
+    <h4>📋 Documents you'll need during KYC</h4>
+    <p>
+      <strong>All operators:</strong> Aadhaar Card, PAN Card, Bank account &amp; IFSC (for payout), cancelled cheque / passbook photo<br/>
+      <strong>Rafting operators:</strong> AIRI certification for lead guide<br/>
+      <strong>Paragliding operators:</strong> APPI or DGCA license<br/>
+      <strong>Trekking operators:</strong> Guide credentials / company registration (recommended)
+    </p>
+  </div>
+
+  <div class="step-list">
+    <div class="step-card">
+      <div class="step-num">⏱</div>
+      <div class="step-content">
+        <h3>Verification timeline</h3>
+        <p>KYC documents are reviewed within <strong>1–2 business days</strong>. You'll receive an email with the result. For urgent queries, reach us at <a href="mailto:support@wanderpool.com" class="link-teal">support@wanderpool.com</a>.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">📞</div>
+      <div class="step-content">
+        <h3>10-minute video call</h3>
+        <p>After document review, our team will schedule a short video call to confirm your setup and answer any questions. This is mandatory for all operators before the first listing goes live.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">✅</div>
+      <div class="step-content">
+        <h3>Go live!</h3>
+        <p>Once verified, your listing is approved and visible to customers across Uttarakhand and beyond. You'll get notified by email for every new booking.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 3 — Adding Experiences + Slots
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="section-label"><span class="dot"></span> YOUR DASHBOARD</div>
+  <h2>Adding experiences &amp; managing slots</h2>
+  <p class="subtitle">Everything you need is in one place — your WanderPool dashboard.</p>
+
+  <h3 style="margin-bottom:12px; margin-top:8px;">Creating an experience listing</h3>
+
+  <ul class="checklist">
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Title &amp; category</strong> — e.g. "Grade IV River Rafting — 16 km" under Water Sports → River Rafting</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Description</strong> — Write what makes your experience unique. Minimum 100 words. Be specific about the route, grade, meeting point.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Photos</strong> — Minimum 5 real photos (no stock images). Include the activity, equipment, landscape, and your team. First photo becomes the cover.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Pricing</strong> — Set per-person price in ₹. You can create group-size tiers (e.g. solo ₹1,200 / group of 6+ ₹999/person). Prices must match or be higher than what you charge elsewhere (price parity clause in agreement).</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Inclusions &amp; exclusions</strong> — Be clear. "Helmet, life jacket, guide, transport to put-in point" included. "Meals, accommodation" excluded.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Cancellation policy</strong> — Choose one of 3 fixed options: Free cancel 48h before / 50% refund 24h before / No refund.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Activity details</strong> — Our smart form will ask specific questions for your category (e.g. rapids grade, river stretch, min age for rafting; altitude, trek grade, camping for trekking). Fill these accurately — they show on your listing.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Itinerary</strong> — Optional day-by-day breakdown for multi-day experiences (trekking packages, camping tours).</div>
+    </li>
+  </ul>
+
+  <h3 style="margin-top:28px; margin-bottom:12px;">Managing your availability slots</h3>
+
+  <ul class="checklist">
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Bulk create recurring slots</strong> — Set a date range + time slots + days of week + capacity in one go. E.g. "Every Mon–Sat, 7 AM–10 AM + 11 AM–2 PM, capacity 25, for the next 3 months."</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>Delete a slot</strong> — You can delete any slot that has no confirmed bookings. Slots with confirmed bookings are locked.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div><strong>View capacity</strong> — Dashboard shows booked_count vs. total capacity per slot in real time. Customers only see slots with remaining capacity.</div>
+    </li>
+  </ul>
+
+  <div class="info-grid" style="margin-top:28px;">
+    <div class="info-card">
+      <div class="icon">👥</div>
+      <h4>Adding guides (Agency accounts)</h4>
+      <p>Under Dashboard → Guides, add your team members. Each guide gets their own login and can mark bookings as Started / Completed. You assign bookings to specific guides.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">🏃</div>
+      <h4>Solo operators</h4>
+      <p>Running your business alone? Choose "Solo Operator" during registration for a simplified experience. You manage everything yourself — no guide management needed.</p>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 4 — Booking Flow + Payouts
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="section-label"><span class="dot"></span> BOOKINGS &amp; EARNINGS</div>
+  <h2>How bookings &amp; payouts work</h2>
+  <p class="subtitle">Once you're live, here's what happens when a customer books.</p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot">1</div>
+      <div class="timeline-body">
+        <h4>Customer books on WanderPool</h4>
+        <p>Customer picks your experience, selects a date &amp; time slot, pays online via Razorpay (cards, UPI, netbanking). You're notified instantly by email.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot amber">2</div>
+      <div class="timeline-body">
+        <h4>Customer gets a confirmation + guide intro email</h4>
+        <p>WanderPool automatically sends the booking voucher, meeting point, and an introduction to your guide — all handled by us. You focus on the activity.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot light">3</div>
+      <div class="timeline-body">
+        <h4>Mark activity as Started</h4>
+        <p>On the day, open your dashboard and mark the booking as "Started" when the activity begins. This is required to release the payout.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot">4</div>
+      <div class="timeline-body">
+        <h4>Mark activity as Completed</h4>
+        <p>After the activity ends, mark it "Completed." This triggers the payout. Your earnings arrive in your registered bank account <strong>within 3 business days</strong>.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot amber">5</div>
+      <div class="timeline-body">
+        <h4>Customer leaves a review</h4>
+        <p>6 hours after activity completion, WanderPool automatically sends a review request to the customer. Good service = better ratings = more bookings. You can reply publicly to any review (300 chars).</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:28px; margin-bottom:16px;">Earnings example</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Booking</th>
+        <th>Listing Price</th>
+        <th>Pax</th>
+        <th>Subtotal</th>
+        <th>WanderPool Fee (12%)</th>
+        <th>Your Payout</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>River Rafting 16km</td>
+        <td>₹1,200/person</td>
+        <td>4</td>
+        <td>₹4,800</td>
+        <td>₹576</td>
+        <td><strong style="color:var(--primary-dark)">₹4,224</strong></td>
+      </tr>
+      <tr>
+        <td>Valley of Flowers Trek (3D)</td>
+        <td>₹8,500/person</td>
+        <td>2</td>
+        <td>₹17,000</td>
+        <td>₹2,040</td>
+        <td><strong style="color:var(--primary-dark)">₹14,960</strong></td>
+      </tr>
+      <tr>
+        <td>Paragliding — Mussoorie</td>
+        <td>₹3,500/person</td>
+        <td>1</td>
+        <td>₹3,500</td>
+        <td>₹420</td>
+        <td><strong style="color:var(--primary-dark)">₹3,080</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="color:var(--muted); font-size:12px; margin-top:8px;">* GST is added on top of the listing price and collected from the customer. It is not deducted from your payout. The platform fee (12–15%) is agreed upon during onboarding.</p>
+
+  <div class="highlight-box" style="margin-top:24px;">
+    <h4>Partial payment option</h4>
+    <p>Operators can enable partial payment mode — the customer pays the platform fee + GST online, and the remaining amount in cash at the venue. This reduces online payment hesitation for high-value experiences. Cash must be collected before you can mark the activity as Started.</p>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 5 — Quality, Safety & Support
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+
+  <div class="section-label"><span class="dot"></span> QUALITY &amp; SUPPORT</div>
+  <h2>Our commitment to quality</h2>
+  <p class="subtitle">We hold every operator to a high standard — because our customers trust us with their safety.</p>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="icon">⭐</div>
+      <h4>Health Score</h4>
+      <p>Every operator has an auto-calculated score based on: Rating avg (40%), Cancellation rate (25%), Response time (15%), Listing accuracy (12%), Repeat bookings (8%).</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">🚩</div>
+      <h4>Flag system</h4>
+      <p><span class="tag tag-amber">Yellow flag</span> below 3.8★ or 3 complaints in 30 days — listing demoted in search. <span class="tag" style="background:#FEE2E2;color:#991B1B">Red flag</span> below 3.0★ or safety complaint — listing paused immediately.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">💬</div>
+      <h4>Support SLA</h4>
+      <p>WhatsApp &amp; email support 7 AM–8 PM. We respond within 15 minutes. Complaint resolution within 2 hours. Operator no-show = full refund to customer within 24 hrs.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">🤝</div>
+      <h4>Operator agreement</h4>
+      <p>You'll digitally sign our operator agreement during onboarding. Key terms: price parity clause (no lower prices elsewhere), safety certifications kept current, accurate listing info.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:28px; margin-bottom:14px;">Tips for a great listing</h3>
+
+  <ul class="checklist">
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div>Use <strong>real photos</strong> — bright, high resolution, showing the actual activity. Listings with 8+ photos get 60% more clicks.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div>Write a <strong>specific description</strong>. "16 km Grade IV rafting from Shivpuri to Rishikesh" is better than "exciting rafting experience."</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div>Be honest about <strong>difficulty level, age limits, and fitness requirements.</strong> Surprises on the day lead to bad reviews.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div>Respond to customer queries (via WanderPool dashboard) <strong>within 2 hours</strong> for the best response-time score.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div>Always <strong>reply publicly to reviews</strong> — positive or negative. It shows professionalism to future customers.</div>
+    </li>
+    <li>
+      <span class="check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>
+      <div>Keep your <strong>slots updated</strong>. Remove unavailable dates promptly. Cancellations hurt your health score.</div>
+    </li>
+  </ul>
+
+  <!-- CTA section -->
+  <div class="cta-section">
+    <h2>Ready to start earning?</h2>
+    <p>Registration is free. Your first listing can be live within 48 hours of KYC approval.</p>
+    <a href="https://wanderpool.com/agency/register" class="cta-url" target="_blank">👉 wanderpool.com/agency/register</a>
+    <div class="support-row">
+      <a href="mailto:support@wanderpool.com" class="support-item">📧 support@wanderpool.com</a>
+      <a href="https://wanderpool.com/for-operators" class="support-item" target="_blank">🌐 wanderpool.com/for-operators</a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>WanderPool</strong> — India's adventure experience marketplace &nbsp;·&nbsp;
+  <a href="https://wanderpool.com" class="link-teal" target="_blank">wanderpool.com</a> &nbsp;·&nbsp;
+  <a href="https://wanderpool.com/for-operators" class="link-teal" target="_blank">For Operators</a> &nbsp;·&nbsp;
+  <a href="https://wanderpool.com/contact" class="link-teal" target="_blank">Contact Us</a><br/>
+  <br/>
+  © 2026 WanderPool. All rights reserved. &nbsp;·&nbsp; Uttarakhand, India
+</div>
+
+</body>
+</html>
