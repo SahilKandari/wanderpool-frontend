@@ -45,6 +45,7 @@ export interface Experience {
   updated_at: string;
   // Joined fields
   cover_image_url?: string | null;
+  full_payment_enabled?: boolean;
   images?: ExperienceImage[];
   agency_name?: string;
 }

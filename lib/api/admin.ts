@@ -14,7 +14,7 @@ export async function adminGetAgency(id: string): Promise<Agency> {
 
 export async function adminUpdateGates(
   id: string,
-  gates: { bank_verified?: boolean; certs_verified?: boolean; video_call_done?: boolean }
+  gates: { bank_verified?: boolean; certs_verified?: boolean; video_call_done?: boolean; full_payment_enabled?: boolean }
 ): Promise<Agency> {
   return apiFetch<Agency>(`/admin/agencies/${id}/gates`, {
     method: "PATCH",

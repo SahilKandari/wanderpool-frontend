@@ -40,6 +40,7 @@ export interface Agency {
   bank_verified: boolean;
   certs_verified: boolean;
   video_call_done: boolean;
+  full_payment_enabled: boolean;
   agreement_signed: boolean;
   onboarding_submitted_at: string | null;
   // Stats (detail endpoint only)

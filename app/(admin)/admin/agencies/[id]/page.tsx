@@ -404,6 +404,12 @@ export default function AdminAgencyDetailPage({
                   disabled={gatesMutation.isPending}
                   onChange={(v) => gatesMutation.mutate({ video_call_done: v })}
                 />
+                <GateToggle
+                  label="Full payment available"
+                  checked={agency.full_payment_enabled}
+                  disabled={gatesMutation.isPending}
+                  onChange={(v) => gatesMutation.mutate({ full_payment_enabled: v })}
+                />
                 <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
                   <span className={agency.agreement_signed ? "text-emerald-700 font-medium" : "text-muted-foreground"}>
                     Agreement Signed

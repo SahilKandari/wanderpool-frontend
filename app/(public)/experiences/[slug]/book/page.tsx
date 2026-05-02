@@ -116,6 +116,14 @@ export default function BookPage({
     }
   }, [exp?.min_participants]);
 
+  // Force partial-only when agency has disabled full payment
+  const agencyFullPayment = exp?.full_payment_enabled !== false;
+  useEffect(() => {
+    if (exp?.full_payment_enabled === false) {
+      setPaymentMode("partial");
+    }
+  }, [exp?.full_payment_enabled]);
+
   const { data: slots = [], isLoading: slotsLoading } = useQuery({
     queryKey: ["slots", exp?.id],
     queryFn: () => listExperienceSlots(exp!.id),
@@ -145,10 +153,12 @@ export default function BookPage({
   const slot = slots.find((s) => s.id === selectedSlot);
   const pricePerPax = slot?.base_price_paise ?? exp?.base_price_paise ?? 0;
   const subtotal = pricePerPax * participants;
-  const gstPaise = Math.round((subtotal * gstPct) / 100);
-  const totalPaise = subtotal + gstPaise;
   const platformFee = Math.round((subtotal * commissionPct) / 100);
-  // GST always collected upfront; partial = booking fee + full GST now
+  // Partial-only agencies: GST on platform fee only (WanderPool's service fee)
+  const gstBase = agencyFullPayment ? subtotal : platformFee;
+  const gstPaise = Math.round((gstBase * gstPct) / 100);
+  const totalPaise = subtotal + gstPaise;
+  // GST always collected upfront; partial = booking fee + GST now
   const chargePaise = paymentMode === "partial" ? platformFee + gstPaise : totalPaise;
   const remainingPaise = paymentMode === "partial" ? subtotal - platformFee : 0;
 
@@ -380,8 +390,8 @@ export default function BookPage({
               </div>
             </div>
 
-            {/* Payment mode */}
-            {partialEnabled && (
+            {/* Payment mode — hidden when agency is partial-only */}
+            {partialEnabled && agencyFullPayment && (
               <div className="bg-white rounded-2xl border border-slate-100 p-5">
                 <h2 className="font-semibold text-slate-900 mb-1 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-primary" />
@@ -463,7 +473,7 @@ export default function BookPage({
                 </div>
                 {gstPaise > 0 && (
                   <div className="flex justify-between text-slate-500 text-xs">
-                    <span>GST ({gstPct}%)</span>
+                    <span>GST ({gstPct}%{!agencyFullPayment ? " on booking fee" : ""})</span>
                     <span>{fmt(gstPaise)}</span>
                   </div>
                 )}
