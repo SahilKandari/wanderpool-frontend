@@ -17,14 +17,12 @@ import {
   ChevronRight,
   ChevronDown,
   Shield,
-  Calendar,
   Share2,
   Heart,
   ArrowRight,
   Info,
   AlertTriangle,
   Phone,
-  Loader2,
   MessageSquare,
   ThumbsUp,
   Copy,
@@ -35,7 +33,6 @@ import {
   Expand,
 } from "lucide-react";
 import { getExperienceBySlug, experienceKeys } from "@/lib/api/experiences";
-import { listExperienceSlots, bookingKeys } from "@/lib/api/bookings";
 import {
   getExperienceReviews,
   checkReviewEligibility,
@@ -104,8 +101,6 @@ export default function ExperienceDetailClient({
   const { user } = useAuth();
   const [imgIndex, setImgIndex] = useState(0);
   const [participants, setParticipants] = useState(2);
-  const [bookingDate, setBookingDate] = useState("");
-  const [selectedSlotId, setSelectedSlotId] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
   const [shareCopied, setShareCopied] = useState(false);
   const [meetingCopied, setMeetingCopied] = useState(false);
@@ -126,12 +121,10 @@ export default function ExperienceDetailClient({
   const [activeSection, setActiveSection] = useState<NavSection>("overview");
 
   const bookingCardRef = useRef<HTMLDivElement>(null);
-  // Observe the actual Book Now CTA so the mobile bar hides when it's visible
-  const bookNowActionRef = useRef<HTMLDivElement>(null);
 
-  // Hide the mobile fixed "Book Now" bar when the book-now action area is in view
+  // Hide the mobile fixed bar when the desktop booking card scrolls into view
   useEffect(() => {
-    const el = bookNowActionRef.current;
+    const el = bookingCardRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => setShowMobileBook(!entry.isIntersecting),
@@ -179,13 +172,6 @@ export default function ExperienceDetailClient({
     queryKey: reviewKeys.eligible(exp?.id ?? ""),
     queryFn: () => checkReviewEligibility(exp!.id),
     enabled: !!exp?.id && !!user && user.actorKind === "customer",
-  });
-
-  // Fetch slots for the selected date only (re-fetches when date changes)
-  const { data: daySlots = [], isLoading: slotsLoading } = useQuery({
-    queryKey: [...bookingKeys.all, "slots", exp?.id, bookingDate],
-    queryFn: () => listExperienceSlots(exp!.id, bookingDate),
-    enabled: !!exp?.id && bookingDate !== "",
   });
 
   // Fetch category fields to display activity-specific metadata
@@ -927,7 +913,7 @@ export default function ExperienceDetailClient({
                     <span className="text-slate-500 text-sm">/ person</span>
                   </div>
                   {exp.avg_rating > 0 && (
-                    <div className="flex items-center gap-1 mt-1">
+                    <div className="flex items-center gap-1 mt-1.5">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                           key={i}
@@ -940,145 +926,64 @@ export default function ExperienceDetailClient({
                         />
                       ))}
                       <span className="text-xs text-slate-500 ml-1">
-                        ({exp.review_count} reviews)
+                        ({exp.review_count} review{exp.review_count !== 1 ? "s" : ""})
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Step 1: Date picker */}
-                <div className="mb-4">
-                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide block mb-1.5">
-                    1. Select Date
+                {/* Participants */}
+                <div className="mb-5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">
+                    Participants
                   </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      type="date"
-                      value={bookingDate}
-                      onChange={(e) => {
-                        setBookingDate(e.target.value);
-                        setSelectedSlotId(""); // reset slot when date changes
-                      }}
-                      min={new Date().toISOString().split("T")[0]}
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                    />
-                  </div>
-                </div>
-
-                {/* Step 2: Time slot picker — only shown after date selected */}
-                {bookingDate && (
-                  <div className="mb-4">
-                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide block mb-1.5">
-                      2. Select Time
-                    </label>
-                    {slotsLoading ? (
-                      <div className="flex items-center justify-center py-4 text-slate-400 text-sm gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading available times…
-                      </div>
-                    ) : daySlots.length === 0 ? (
-                      <div className="text-center py-4 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500">
-                        No slots available for this date.
-                        <br />
-                        <span className="text-xs">Try a different date.</span>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2">
-                        {daySlots.map((slot) => {
-                          const time = new Date(slot.starts_at).toLocaleTimeString("en-IN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          });
-                          const isSelected = selectedSlotId === slot.id;
-                          return (
-                            <button
-                              key={slot.id}
-                              type="button"
-                              onClick={() => setSelectedSlotId(slot.id)}
-                              className={cn(
-                                "py-2.5 px-2 rounded-xl border text-sm font-medium transition-all text-center",
-                                isSelected
-                                  ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20"
-                                  : "border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-slate-50"
-                              )}
-                            >
-                              <span className="block font-semibold">{time}</span>
-                              <span className="block text-xs text-slate-400 mt-0.5">
-                                {slot.spots_left} spot{slot.spots_left !== 1 ? "s" : ""} left
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Step 3: Participants — only shown after slot selected */}
-                {selectedSlotId && (
-                  <div className="mb-5">
-                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide block mb-1.5">
-                      3. Participants
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setParticipants(Math.max(exp.min_participants, participants - 1))}
-                        className="h-9 w-9 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors font-semibold text-slate-700"
-                      >
-                        −
-                      </button>
-                      <span className="flex-1 text-center font-semibold text-slate-900 text-lg">
-                        {participants}
-                      </span>
-                      <button
-                        onClick={() => setParticipants(Math.min(exp.max_participants, participants + 1))}
-                        className="h-9 w-9 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors font-semibold text-slate-700"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <p className="text-xs text-slate-400 text-center mt-1">
-                      {exp.min_participants}–{exp.max_participants} people
-                    </p>
-                  </div>
-                )}
-
-                {/* Price breakdown — only shown after slot selected */}
-                {selectedSlotId && (
-                  <div className="bg-slate-50 rounded-xl p-3 mb-5 space-y-1.5 text-sm">
-                    <div className="flex justify-between text-slate-600">
-                      <span>₹{price.toLocaleString("en-IN")} × {participants} persons</span>
-                      <span>₹{totalPrice.toLocaleString("en-IN")}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200">
-                      <span>Total</span>
-                      <span>₹{totalPrice.toLocaleString("en-IN")}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Book button — disabled until date + slot selected */}
-                <div ref={bookNowActionRef}>
-                  {selectedSlotId ? (
-                    <Link
-                      href={
-                        user && user.actorKind === "customer"
-                          ? `/experiences/${slug}/book?pax=${participants}&slot=${selectedSlotId}`
-                          : `/customer/login?next=/experiences/${slug}/book?pax=${participants}%26slot=${selectedSlotId}`
-                      }
-                      className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 group"
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setParticipants(Math.max(exp.min_participants, participants - 1))}
+                      className="h-9 w-9 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors font-semibold text-slate-700 text-lg"
                     >
-                      Book Now
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  ) : (
-                    <div className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-400 font-semibold text-sm text-center select-none">
-                      {!bookingDate ? "Select a date to continue" : "Select a time slot to continue"}
-                    </div>
-                  )}
+                      −
+                    </button>
+                    <span className="flex-1 text-center font-bold text-slate-900 text-xl">
+                      {participants}
+                    </span>
+                    <button
+                      onClick={() => setParticipants(Math.min(exp.max_participants, participants + 1))}
+                      className="h-9 w-9 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors font-semibold text-slate-700 text-lg"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 text-center mt-1.5">
+                    {exp.min_participants}–{exp.max_participants} people per booking
+                  </p>
                 </div>
+
+                {/* Price preview */}
+                <div className="bg-slate-50 rounded-xl p-3.5 mb-5 space-y-1.5 text-sm">
+                  <div className="flex justify-between text-slate-500">
+                    <span>₹{price.toLocaleString("en-IN")} × {participants} {participants === 1 ? "person" : "persons"}</span>
+                    <span className="text-slate-700 font-medium">₹{totalPrice.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200">
+                    <span>Estimated total</span>
+                    <span>₹{totalPrice.toLocaleString("en-IN")}</span>
+                  </div>
+                  <p className="text-xs text-slate-400 pt-0.5">+ GST &amp; booking fee at checkout</p>
+                </div>
+
+                {/* Book Now button */}
+                <Link
+                  href={
+                    user && user.actorKind === "customer"
+                      ? `/experiences/${slug}/book?pax=${participants}`
+                      : `/customer/login?next=/experiences/${slug}/book?pax=${participants}`
+                  }
+                  className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-primary text-white font-semibold text-base hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 group"
+                >
+                  Book Now
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
 
                 <p className="text-xs text-slate-400 text-center mt-3">
                   {user && user.actorKind === "customer"
@@ -1207,19 +1112,17 @@ export default function ExperienceDetailClient({
                   <span className="text-xs font-normal text-slate-400 ml-1">/ person</span>
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  const el = bookingCardRef.current;
-                  if (!el) return;
-                  // 64px site nav + 52px section nav = ~116px of sticky headers
-                  const top = el.getBoundingClientRect().top + window.scrollY - 120;
-                  window.scrollTo({ top, behavior: "smooth" });
-                }}
+              <Link
+                href={
+                  user && user.actorKind === "customer"
+                    ? `/experiences/${slug}/book?pax=${participants}`
+                    : `/customer/login?next=/experiences/${slug}/book?pax=${participants}`
+                }
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
               >
                 Book Now
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
           </motion.div>
         )}
