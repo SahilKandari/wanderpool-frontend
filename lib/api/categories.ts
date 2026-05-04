@@ -28,6 +28,7 @@ export async function adminCreateCategory(data: {
   parent_id?: string;
   description?: string;
   is_leaf: boolean;
+  gst_rate_bps?: number | null;
 }): Promise<Category> {
   return apiFetch<Category>("/admin/categories", {
     method: "POST",

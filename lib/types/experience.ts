@@ -46,6 +46,7 @@ export interface Experience {
   // Joined fields
   cover_image_url?: string | null;
   full_payment_enabled?: boolean;
+  category_gst_rate_bps?: number | null;
   images?: ExperienceImage[];
   agency_name?: string;
 }
@@ -92,6 +93,7 @@ export interface Category {
   description: string | null;
   is_leaf: boolean;
   is_active: boolean;
+  gst_rate_bps?: number | null;
   sort_order: number;
   created_at: string;
 }

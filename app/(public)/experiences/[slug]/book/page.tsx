@@ -75,7 +75,7 @@ export default function BookPage({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [partialEnabled, setPartialEnabled] = useState(true);
   const [commissionPct, setCommissionPct] = useState(13);
-  const [gstPct, setGstPct] = useState(18);
+  const [gstBps, setGstBps] = useState(1800);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
@@ -93,8 +93,7 @@ export default function BookPage({
       .then((d) => {
         const bps = Number(d.commission_rate_bps ?? 1300);
         setCommissionPct(Math.round(bps / 100));
-        const gstBps = Number(d.gst_rate_bps ?? 1800);
-        setGstPct(Math.round(gstBps / 100));
+        setGstBps(Number(d.gst_rate_bps ?? 1800));
         // Default to enabled if key is missing
         if (d.partial_payment_enabled !== undefined) {
           setPartialEnabled(d.partial_payment_enabled === "true");
@@ -149,6 +148,9 @@ export default function BookPage({
       setDateFilter(slotDate);
     }
   }, [slots]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Category-specific GST rate takes precedence over platform default
+  const gstPct = Math.round((exp?.category_gst_rate_bps ?? gstBps) / 100);
 
   const slot = slots.find((s) => s.id === selectedSlot);
   const pricePerPax = slot?.base_price_paise ?? exp?.base_price_paise ?? 0;
