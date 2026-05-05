@@ -21,6 +21,7 @@ import {
   setCoverImage,
 } from "@/lib/api/experiences";
 import { apiFetch } from "@/lib/api/client";
+import { cloudinaryUrl } from "@/lib/utils/cloudinary";
 import type { ExperienceImage } from "@/lib/types/experience";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ interface SignedParams {
   folder: string;
   allowed_formats: string;
   resource_type: string;
+  transformation?: string;
   upload_url: string;
 }
 
@@ -71,7 +73,8 @@ export default function ExperienceImagesPage({
   });
 
   async function uploadFile(file: File) {
-    if (!file.type.startsWith("image/")) {
+    const isHeic = /\.(heic|heif)$/i.test(file.name);
+    if (!file.type.startsWith("image/") && !isHeic) {
       toast.error("Only image files are supported");
       return;
     }
@@ -95,6 +98,9 @@ export default function ExperienceImagesPage({
       formData.append("signature", signed.signature);
       formData.append("folder", signed.folder);
       formData.append("allowed_formats", signed.allowed_formats);
+      if (signed.transformation) {
+        formData.append("transformation", signed.transformation);
+      }
 
       const cdnRes = await fetch(signed.upload_url, {
         method: "POST",
@@ -158,7 +164,7 @@ export default function ExperienceImagesPage({
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           multiple
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
@@ -206,7 +212,7 @@ export default function ExperienceImagesPage({
             >
               <div className="aspect-video bg-muted relative">
                 <Image
-                  src={img.url}
+                  src={cloudinaryUrl(img.url, { width: 600 })!}
                   alt={img.alt_text ?? "Experience photo"}
                   fill
                   className="object-cover"

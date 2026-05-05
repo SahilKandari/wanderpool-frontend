@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { listCustomerBookings, bookingKeys } from "@/lib/api/bookings";
 import type { Booking, BookingStatus } from "@/lib/types/booking";
 import { cn } from "@/lib/utils";
+import { cloudinaryUrl } from "@/lib/utils/cloudinary";
 
 const STATUS_CONFIG: Record<
   BookingStatus,
@@ -66,7 +67,7 @@ const PLACEHOLDER_IMAGES = [
 function BookingCard({ booking, index }: { booking: Booking; index: number }) {
   const status = STATUS_CONFIG[booking.status];
   const price = Math.round(booking.total_paise / 100);
-  const img = booking.cover_image_url ?? PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
+  const img = cloudinaryUrl(booking.cover_image_url, { width: 400 }) ?? PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
   const isUpcoming =
     booking.status === "confirmed" &&
     new Date(booking.slot_date) >= new Date();

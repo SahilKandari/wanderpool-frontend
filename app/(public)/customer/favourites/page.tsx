@@ -23,6 +23,7 @@ import {
   type FavouriteExperience,
 } from "@/lib/api/favourites";
 import { cn } from "@/lib/utils";
+import { cloudinaryUrl } from "@/lib/utils/cloudinary";
 
 function durationLabel(minutes: number) {
   if (minutes < 60) return `${minutes} min`;
@@ -74,7 +75,7 @@ function FavouriteCard({ exp }: { exp: FavouriteExperience }) {
         <div className="relative h-52 overflow-hidden">
           {exp.cover_image_url ? (
             <Image
-              src={exp.cover_image_url}
+              src={cloudinaryUrl(exp.cover_image_url, { width: 700 })!}
               alt={exp.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"

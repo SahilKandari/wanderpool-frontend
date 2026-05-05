@@ -28,6 +28,7 @@ import { listPublicExperiences, experienceKeys } from "@/lib/api/experiences";
 import { listRootCategories, categoryKeys } from "@/lib/api/categories";
 import type { Experience } from "@/lib/types/experience";
 import { cn } from "@/lib/utils";
+import { cloudinaryUrl } from "@/lib/utils/cloudinary";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "water-sports": <Waves className="h-4 w-4" />,
@@ -77,7 +78,7 @@ function ExperienceCard({ exp, index }: { exp: Experience; index: number }) {
   const { isFavourited, toggle, isLoading: favLoading } = useFavourite(exp.id);
   const price = Math.round(exp.base_price_paise / 100);
 
-  const img = exp.cover_image_url ?? PLACEHOLDERS[index % PLACEHOLDERS.length];
+  const img = cloudinaryUrl(exp.cover_image_url, { width: 700 }) ?? PLACEHOLDERS[index % PLACEHOLDERS.length];
 
   return (
     <motion.div
@@ -93,6 +94,9 @@ function ExperienceCard({ exp, index }: { exp: Experience; index: number }) {
             src={img}
             alt={exp.title}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            priority={index === 0}
+            loading={index === 0 ? "eager" : "lazy"}
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />

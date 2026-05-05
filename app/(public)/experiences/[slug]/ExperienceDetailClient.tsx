@@ -42,6 +42,7 @@ import { getCategoryFields, categoryKeys } from "@/lib/api/categories";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useFavourite } from "@/lib/hooks/useFavourite";
 import { cn } from "@/lib/utils";
+import { cloudinaryUrl } from "@/lib/utils/cloudinary";
 
 const POLICY_MAP: Record<string, { label: string; description: string; color: string; icon: React.ReactNode }> = {
   free_48h: {
@@ -255,7 +256,7 @@ export default function ExperienceDetailClient({
             onClick={() => setLightboxOpen(true)}
           >
             <Image
-              src={images[imgIndex]}
+              src={cloudinaryUrl(images[imgIndex], { width: 1400 })!}
               alt={exp.title}
               fill
               className="object-cover"
@@ -1055,7 +1056,7 @@ export default function ExperienceDetailClient({
               onClick={(e) => e.stopPropagation()}
             >
               <Image
-                src={images[imgIndex]}
+                src={cloudinaryUrl(images[imgIndex], { width: 1920 })!}
                 alt={exp.title}
                 fill
                 className="object-contain"
@@ -1085,7 +1086,7 @@ export default function ExperienceDetailClient({
                       i === imgIndex ? "border-white opacity-100" : "border-white/30 opacity-50 hover:opacity-75"
                     )}
                   >
-                    <img src={src} alt="" className="h-full w-full object-cover" />
+                    <img src={cloudinaryUrl(src, { width: 200 }) ?? src} alt="" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
