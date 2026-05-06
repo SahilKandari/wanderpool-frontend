@@ -582,12 +582,20 @@ export default function ExperienceDetailClient({
               });
               if (!hasAnyValue) return null;
               return (
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 bg-white">
-                    <Info className="h-4 w-4 text-slate-600 shrink-0" />
-                    <h2 className="text-sm font-semibold text-slate-900">Activity Details</h2>
+                <section className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-primary/8 to-transparent px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <Info className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">Activity Details</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">Key specifications for this experience</p>
+                    </div>
                   </div>
-                  <div className="p-4 space-y-5">
+
+                  {/* Groups */}
+                  <div className="divide-y divide-slate-100">
                     {Object.entries(groups).map(([group, fields]) => {
                       const visibleFields = fields.filter((f) => {
                         const v = exp.metadata?.[f.field_key];
@@ -595,9 +603,12 @@ export default function ExperienceDetailClient({
                       });
                       if (visibleFields.length === 0) return null;
                       return (
-                        <div key={group}>
+                        <div key={group} className="p-5">
                           {Object.keys(groups).length > 1 && (
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">{group}</p>
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className="h-1 w-4 rounded-full bg-primary/60 shrink-0" />
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{group}</p>
+                            </div>
                           )}
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {visibleFields.map((f) => {
@@ -605,26 +616,37 @@ export default function ExperienceDetailClient({
                               let display: React.ReactNode;
                               if (f.field_type === "boolean") {
                                 display = v ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Yes</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
+                                    <span className="text-sm font-semibold text-emerald-700">Yes</span>
+                                  </div>
                                 ) : (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">No</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="h-2 w-2 rounded-full bg-slate-300 shrink-0" />
+                                    <span className="text-sm font-medium text-slate-500">No</span>
+                                  </div>
                                 );
                               } else if (f.field_type === "string_array" && Array.isArray(v)) {
                                 display = (
-                                  <div className="flex flex-wrap gap-1">
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
                                     {(v as string[]).map((item, i) => (
-                                      <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                      <span key={i} className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/15">
                                         {item}
                                       </span>
                                     ))}
                                   </div>
                                 );
+                              } else if (f.field_type === "number") {
+                                display = <span className="text-xl font-bold text-slate-900 mt-0.5 block">{String(v)}</span>;
                               } else {
-                                display = <span className="text-sm font-medium text-slate-800">{String(v)}</span>;
+                                display = <span className="text-sm font-semibold text-slate-800 mt-0.5 block">{String(v)}</span>;
                               }
                               return (
-                                <div key={f.field_key} className="space-y-1">
-                                  <p className="text-xs text-slate-500">{f.label}</p>
+                                <div
+                                  key={f.field_key}
+                                  className="rounded-xl bg-slate-50 border border-slate-100 p-3 hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                                >
+                                  <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{f.label}</p>
                                   {display}
                                 </div>
                               );
@@ -634,7 +656,7 @@ export default function ExperienceDetailClient({
                       );
                     })}
                   </div>
-                </div>
+                </section>
               );
             })()}
 
