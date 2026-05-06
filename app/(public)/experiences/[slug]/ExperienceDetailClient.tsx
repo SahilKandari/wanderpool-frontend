@@ -507,64 +507,104 @@ export default function ExperienceDetailClient({
             {/* ── Itinerary ──────────────────────────────────────────────── */}
             {hasItinerary && (
               <section id="itinerary" className="scroll-mt-32">
-                <div className="flex items-center gap-2 mb-4">
-                  <Route className="h-5 w-5 text-slate-700" />
-                  <h2 className="text-lg font-semibold text-slate-900">Itinerary</h2>
-                  <span className="ml-1 text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                {/* Section header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <Route className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">Your Itinerary</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">Day-by-day breakdown of the experience</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
                     {exp.itinerary!.length} day{exp.itinerary!.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                <div className="space-y-2">
-                  {exp.itinerary!.map((day, index) => {
-                    const isOpen = openDay === index;
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "rounded-xl border transition-colors overflow-hidden",
-                          isOpen ? "border-primary/30 bg-primary/5" : "border-slate-200 bg-white hover:border-slate-300"
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setOpenDay(isOpen ? null : index)}
-                          className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-                        >
-                          <span className={cn(
-                            "shrink-0 h-7 w-12 rounded-lg text-xs font-bold flex items-center justify-center transition-colors",
-                            isOpen ? "bg-primary text-white" : "bg-slate-100 text-slate-600"
+
+                {/* Timeline */}
+                <div className="relative">
+                  {/* Vertical connector line */}
+                  <div className="absolute left-[19px] top-5 bottom-5 w-0.5 bg-gradient-to-b from-primary/60 via-primary/20 to-transparent" />
+
+                  <div className="space-y-3">
+                    {exp.itinerary!.map((day, index) => {
+                      const isOpen = openDay === index;
+                      return (
+                        <div key={index} className="relative flex gap-4">
+                          {/* Day circle on timeline */}
+                          <div className="relative shrink-0 flex flex-col items-center" style={{ width: 40 }}>
+                            <div className={cn(
+                              "h-10 w-10 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 shrink-0",
+                              isOpen
+                                ? "bg-primary border-primary shadow-lg shadow-primary/25"
+                                : "bg-white border-slate-200 hover:border-primary/50"
+                            )}>
+                              <span className={cn(
+                                "text-xs font-bold leading-none transition-colors",
+                                isOpen ? "text-white" : "text-slate-500"
+                              )}>
+                                {String(day.day).padStart(2, "0")}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Card */}
+                          <div className={cn(
+                            "flex-1 rounded-2xl border transition-all duration-200 overflow-hidden mb-1",
+                            isOpen
+                              ? "border-primary/25 shadow-md shadow-primary/8 bg-white"
+                              : "border-slate-200 bg-white hover:border-primary/25 hover:shadow-sm"
                           )}>
-                            Day {String(day.day).padStart(2, "0")}
-                          </span>
-                          <span className="flex-1 text-sm font-semibold text-slate-800 truncate">
-                            {day.title}
-                          </span>
-                          <ChevronDown
-                            className={cn(
-                              "h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200",
-                              isOpen && "rotate-180"
-                            )}
-                          />
-                        </button>
-                        <AnimatePresence initial={false}>
-                          {isOpen && (
-                            <motion.div
-                              key="content"
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.22, ease: "easeInOut" }}
-                              className="overflow-hidden"
+                            <button
+                              type="button"
+                              onClick={() => setOpenDay(isOpen ? null : index)}
+                              className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
                             >
-                              <p className="px-4 pb-4 pt-0 text-sm text-slate-600 leading-relaxed whitespace-pre-line border-t border-primary/10">
-                                {day.description}
-                              </p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
+                              <div className="flex-1 min-w-0">
+                                <p className={cn(
+                                  "text-[11px] font-bold uppercase tracking-widest mb-0.5 transition-colors",
+                                  isOpen ? "text-primary" : "text-slate-400"
+                                )}>
+                                  Day {day.day}
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900 leading-snug">
+                                  {day.title}
+                                </p>
+                              </div>
+                              <div className={cn(
+                                "shrink-0 h-7 w-7 rounded-full flex items-center justify-center transition-all duration-200",
+                                isOpen ? "bg-primary/15 text-primary rotate-180" : "bg-slate-100 text-slate-400"
+                              )}>
+                                <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                              </div>
+                            </button>
+
+                            <AnimatePresence initial={false}>
+                              {isOpen && (
+                                <motion.div
+                                  key="content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="px-4 pb-4 pt-0">
+                                    <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-3" />
+                                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                                      {day.description}
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </section>
             )}
