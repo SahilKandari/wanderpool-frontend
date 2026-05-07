@@ -10,10 +10,16 @@ export type CancellationPolicy =
   | "half_refund_24h"
   | "no_refund";
 
+export interface ItineraryTimeSlot {
+  time: string;
+  description: string;
+}
+
 export interface ItineraryDay {
   day: number;
   title: string;
-  description: string;
+  slots?: ItineraryTimeSlot[];
+  description?: string;
 }
 
 export interface Experience {

@@ -2,12 +2,12 @@
 
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, Controller, useFieldArray, type Resolver } from "react-hook-form";
+import { useForm, Controller, useFieldArray, type Resolver, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Save, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Plus, Trash2, Sun, CloudSun, Sunset, Moon, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,10 +29,15 @@ import {
   listMyExperiences,
 } from "@/lib/api/experiences";
 
+const itinerarySlotSchema = z.object({
+  time: z.string().min(1, "Time label is required"),
+  description: z.string().min(1, "Description is required"),
+});
+
 const itineraryDaySchema = z.object({
   day: z.number().int().min(1),
   title: z.string().min(1, "Day title is required"),
-  description: z.string().min(1, "Day description is required"),
+  slots: z.array(itinerarySlotSchema).default([]),
 });
 
 const schema = z.object({
@@ -54,6 +59,128 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+
+const TIME_PRESETS = [
+  { label: "Morning", Icon: Sun },
+  { label: "Afternoon", Icon: CloudSun },
+  { label: "Evening", Icon: Sunset },
+  { label: "Night", Icon: Moon },
+] as const;
+
+function timeIcon(time: string) {
+  const match = TIME_PRESETS.find((p) => p.label.toLowerCase() === time.toLowerCase());
+  return match ? match.Icon : Clock;
+}
+
+function DayCard({
+  dayIndex,
+  control,
+  register,
+  errors,
+  remove,
+}: {
+  dayIndex: number;
+  control: Control<FormData>;
+  register: ReturnType<typeof useForm<FormData>>["register"];
+  errors: ReturnType<typeof useForm<FormData>>["formState"]["errors"];
+  remove: () => void;
+}) {
+  const { fields: slots, append: appendSlot, remove: removeSlot } = useFieldArray({
+    control,
+    name: `itinerary.${dayIndex}.slots`,
+  });
+
+  return (
+    <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-muted/30">
+        <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
+          Day {dayIndex + 1}
+        </span>
+        <button
+          type="button"
+          onClick={remove}
+          className="h-7 w-7 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="p-4 space-y-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Day Title <span className="text-destructive">*</span></Label>
+          <Input
+            placeholder="e.g. Arrival & Rishikesh Exploration"
+            {...register(`itinerary.${dayIndex}.title`)}
+          />
+          {errors.itinerary?.[dayIndex]?.title && (
+            <p className="text-xs text-destructive">{errors.itinerary[dayIndex]?.title?.message}</p>
+          )}
+        </div>
+
+        {slots.length > 0 && (
+          <div className="space-y-2">
+            {slots.map((slot, si) => {
+              const SlotIcon = timeIcon(slot.time);
+              return (
+                <div key={slot.id} className="rounded-lg border border-border bg-background p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <SlotIcon className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <Input
+                      className="h-7 text-xs font-semibold"
+                      placeholder="e.g. Morning"
+                      {...register(`itinerary.${dayIndex}.slots.${si}.time`)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeSlot(si)}
+                      className="h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <Textarea
+                    rows={2}
+                    className="text-xs"
+                    placeholder="What happens during this time…"
+                    {...register(`itinerary.${dayIndex}.slots.${si}.description`)}
+                  />
+                  {errors.itinerary?.[dayIndex]?.slots?.[si]?.description && (
+                    <p className="text-xs text-destructive">{errors.itinerary[dayIndex]?.slots?.[si]?.description?.message}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Quick add</p>
+          <div className="flex flex-wrap gap-1.5">
+            {TIME_PRESETS.map(({ label, Icon }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => appendSlot({ time: label, description: "" })}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary/15 transition-colors"
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => appendSlot({ time: "", description: "" })}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <Clock className="h-3 w-3" />
+              Custom
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function LoadingSkeleton() {
   return (
@@ -124,7 +251,11 @@ export default function EditExperiencePage({
       inclusions: experience.inclusions?.join(", ") ?? "",
       exclusions: experience.exclusions?.join(", ") ?? "",
       metadata: (experience.metadata as Record<string, unknown>) ?? {},
-      itinerary: experience.itinerary ?? [],
+      itinerary: (experience.itinerary ?? []).map((d) => ({
+        day: d.day,
+        title: d.title,
+        slots: d.slots ?? [],
+      })),
     });
   }, [experience, reset]);
 
@@ -392,58 +523,29 @@ export default function EditExperiencePage({
               <TabsContent value="itinerary" className="mt-0">
                 <div className="mb-4">
                   <p className="text-sm text-muted-foreground">
-                    Add a day-by-day breakdown of the experience. Customers see this as an expandable itinerary on your listing page.
+                    Add a day-by-day breakdown with Morning, Afternoon, Evening, and Night activities. Customers see this as an expandable itinerary on your listing page.
                   </p>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {fields.map((field, index) => (
-                    <div key={field.id} className="rounded-xl border border-border p-4 space-y-3 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
-                          Day {index + 1}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Day Title <span className="text-destructive">*</span></Label>
-                        <Input
-                          placeholder="e.g. Arrival & Rishikesh Exploration"
-                          {...register(`itinerary.${index}.title`)}
-                        />
-                        {errors.itinerary?.[index]?.title && (
-                          <p className="text-xs text-destructive">{errors.itinerary[index]?.title?.message}</p>
-                        )}
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Description <span className="text-destructive">*</span></Label>
-                        <Textarea
-                          rows={3}
-                          placeholder="Describe what happens on this day…"
-                          {...register(`itinerary.${index}.description`)}
-                        />
-                        {errors.itinerary?.[index]?.description && (
-                          <p className="text-xs text-destructive">{errors.itinerary[index]?.description?.message}</p>
-                        )}
-                      </div>
-                    </div>
+                    <DayCard
+                      key={field.id}
+                      dayIndex={index}
+                      control={control}
+                      register={register}
+                      errors={errors}
+                      remove={() => remove(index)}
+                    />
                   ))}
 
                   <Button
                     type="button"
                     variant="outline"
                     className="w-full border-dashed"
-                    onClick={() => append({ day: fields.length + 1, title: "", description: "" })}
+                    onClick={() => append({ day: fields.length + 1, title: "", slots: [] })}
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Day {fields.length + 1}
+                    Add {fields.length === 0 ? "Day 1" : `Day ${fields.length + 1}`}
                   </Button>
 
                   {fields.length === 0 && (

@@ -54,7 +54,7 @@ export interface ExperiencePayload {
   cancellation_policy: string;
   inclusions: string[];
   exclusions: string[];
-  itinerary?: { day: number; title: string; description: string }[];
+  itinerary?: { day: number; title: string; slots?: { time: string; description: string }[]; description?: string }[];
   metadata: Record<string, unknown>;
 }
 
