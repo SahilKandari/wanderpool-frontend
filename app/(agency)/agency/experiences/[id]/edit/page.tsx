@@ -37,6 +37,7 @@ const itinerarySlotSchema = z.object({
 const itineraryDaySchema = z.object({
   day: z.number().int().min(1),
   title: z.string().min(1, "Day title is required"),
+  description: z.string().default(""),
   slots: z.array(itinerarySlotSchema).default([]),
 });
 
@@ -115,6 +116,15 @@ function DayCard({
           {errors.itinerary?.[dayIndex]?.title && (
             <p className="text-xs text-destructive">{errors.itinerary[dayIndex]?.title?.message}</p>
           )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Day Description</Label>
+          <Textarea
+            rows={2}
+            placeholder="Brief overview of the day…"
+            {...register(`itinerary.${dayIndex}.description`)}
+          />
         </div>
 
         {slots.length > 0 && (
@@ -254,6 +264,7 @@ export default function EditExperiencePage({
       itinerary: (experience.itinerary ?? []).map((d) => ({
         day: d.day,
         title: d.title,
+        description: d.description ?? "",
         slots: d.slots ?? [],
       })),
     });
@@ -542,7 +553,7 @@ export default function EditExperiencePage({
                     type="button"
                     variant="outline"
                     className="w-full border-dashed"
-                    onClick={() => append({ day: fields.length + 1, title: "", slots: [] })}
+                    onClick={() => append({ day: fields.length + 1, title: "", description: "", slots: [] })}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add {fields.length === 0 ? "Day 1" : `Day ${fields.length + 1}`}

@@ -593,7 +593,12 @@ export default function ExperienceDetailClient({
                                 >
                                   <div className="px-4 pb-4 pt-0">
                                     <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-3" />
-                                    {(day.slots && day.slots.length > 0) ? (
+                                    {day.description && (
+                                      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line mb-3">
+                                        {day.description}
+                                      </p>
+                                    )}
+                                    {day.slots && day.slots.length > 0 && (
                                       <div className="space-y-3">
                                         {day.slots.map((slot, si) => (
                                           <div key={si} className="flex gap-3">
@@ -604,10 +609,6 @@ export default function ExperienceDetailClient({
                                           </div>
                                         ))}
                                       </div>
-                                    ) : (
-                                      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-                                        {day.description}
-                                      </p>
                                     )}
                                   </div>
                                 </motion.div>
