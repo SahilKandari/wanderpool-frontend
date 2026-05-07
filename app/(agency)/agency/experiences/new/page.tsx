@@ -80,12 +80,14 @@ function DayCard({
   register,
   errors,
   remove,
+  hideHeader = false,
 }: {
   dayIndex: number;
   control: Control<FormData>;
   register: ReturnType<typeof useForm<FormData>>["register"];
   errors: ReturnType<typeof useForm<FormData>>["formState"]["errors"];
   remove: () => void;
+  hideHeader?: boolean;
 }) {
   const { fields: slots, append: appendSlot, remove: removeSlot } = useFieldArray({
     control,
@@ -94,21 +96,22 @@ function DayCard({
 
   return (
     <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
-      {/* Day header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-muted/30">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
-            Day {dayIndex + 1}
-          </span>
+      {!hideHeader && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-muted/30">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
+              Day {dayIndex + 1}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={remove}
+            className="h-7 w-7 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={remove}
-          className="h-7 w-7 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
+      )}
 
       <div className="p-4 space-y-4">
         {/* Day title */}
@@ -217,6 +220,15 @@ export default function NewExperiencePage() {
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "itinerary" });
+  const [itineraryMode, setItineraryMode] = useState<"single" | "multi">("single");
+
+  function switchToSingle() {
+    const toRemove = Array.from({ length: fields.length - 1 }, (_, i) => i + 1);
+    if (toRemove.length > 0) remove(toRemove as never);
+    if (fields.length === 0) append({ day: 1, title: "", description: "", slots: [] });
+    setItineraryMode("single");
+  }
+  function switchToMulti() { setItineraryMode("multi"); }
 
   const selectedCategory = watch("category_id");
 
@@ -450,36 +462,80 @@ export default function NewExperiencePage() {
     /* Step 4 — Itinerary */
     <div key="itinerary" className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Optionally add a day-by-day breakdown with Morning, Afternoon, Evening, and Night activities. Customers see this as an expandable itinerary on your listing page.
+        Optionally add an itinerary with time-of-day activity slots. Customers see this on your listing page.
       </p>
-      <div className="space-y-3">
-        {fields.map((field, index) => (
-          <DayCard
-            key={field.id}
-            dayIndex={index}
-            control={control}
-            register={register}
-            errors={errors}
-            remove={() => remove(index)}
-          />
-        ))}
 
-        <Button
+      {/* Mode toggle */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+        <button
           type="button"
-          variant="outline"
-          className="w-full border-dashed"
-          onClick={() => append({ day: fields.length + 1, title: "", description: "", slots: [] })}
+          onClick={switchToSingle}
+          className={cn("px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+            itineraryMode === "single" ? "bg-background shadow-sm text-slate-900" : "text-muted-foreground hover:text-slate-700")}
         >
-          <Plus className="mr-2 h-4 w-4" />
-          Add {fields.length === 0 ? "Day 1" : `Day ${fields.length + 1}`}
-        </Button>
-
-        {fields.length === 0 && (
-          <p className="text-center text-xs text-muted-foreground py-2">
-            No itinerary added. You can skip this step or add days above.
-          </p>
-        )}
+          Single Day
+        </button>
+        <button
+          type="button"
+          onClick={switchToMulti}
+          className={cn("px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+            itineraryMode === "multi" ? "bg-background shadow-sm text-slate-900" : "text-muted-foreground hover:text-slate-700")}
+        >
+          Multi Day
+        </button>
       </div>
+
+      {itineraryMode === "single" ? (
+        <div className="space-y-3">
+          {fields.length > 0 ? (
+            <DayCard
+              dayIndex={0}
+              control={control}
+              register={register}
+              errors={errors}
+              remove={() => {}}
+              hideHeader={true}
+            />
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-dashed"
+              onClick={() => append({ day: 1, title: "", description: "", slots: [] })}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Schedule
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {fields.map((field, index) => (
+            <DayCard
+              key={field.id}
+              dayIndex={index}
+              control={control}
+              register={register}
+              errors={errors}
+              remove={() => remove(index)}
+            />
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-dashed"
+            onClick={() => append({ day: fields.length + 1, title: "", description: "", slots: [] })}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add {fields.length === 0 ? "Day 1" : `Day ${fields.length + 1}`}
+          </Button>
+          {fields.length === 0 && (
+            <p className="text-center text-xs text-muted-foreground py-2">
+              No itinerary added. You can skip this step or add days above.
+            </p>
+          )}
+        </div>
+      )}
     </div>,
   ];
 

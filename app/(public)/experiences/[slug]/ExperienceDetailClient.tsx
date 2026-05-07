@@ -518,129 +518,176 @@ export default function ExperienceDetailClient({
                       <Route className="h-4.5 w-4.5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-bold text-slate-900">Your Itinerary</h2>
-                      <p className="text-xs text-slate-500 mt-0.5">Day-by-day breakdown of the experience</p>
+                      <h2 className="text-lg font-bold text-slate-900">
+                        {exp.itinerary!.length === 1 ? "Activity Schedule" : "Your Itinerary"}
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {exp.itinerary!.length === 1 ? "What to expect on the day" : "Day-by-day breakdown of the experience"}
+                      </p>
                     </div>
                   </div>
-                  <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
-                    {exp.itinerary!.length} day{exp.itinerary!.length !== 1 ? "s" : ""}
-                  </span>
+                  {exp.itinerary!.length > 1 && (
+                    <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
+                      {exp.itinerary!.length} days
+                    </span>
+                  )}
                 </div>
 
-                {/* Timeline */}
-                <div className="relative">
-                  {/* Vertical connector line */}
-                  <div className="absolute left-[19px] top-5 bottom-5 w-0.5 bg-gradient-to-b from-primary/60 via-primary/20 to-transparent" />
-
-                  <div className="space-y-3">
-                    {exp.itinerary!.map((day, index) => {
-                      const isOpen = openDay === index;
-                      return (
-                        <div key={index} className="relative flex gap-4">
-                          {/* Day circle on timeline */}
-                          <div className="relative shrink-0 flex flex-col items-center" style={{ width: 40 }}>
-                            <div className={cn(
-                              "h-10 w-10 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 shrink-0",
-                              isOpen
-                                ? "bg-primary border-primary shadow-lg shadow-primary/25"
-                                : "bg-white border-slate-200 hover:border-primary/50"
-                            )}>
-                              <span className={cn(
-                                "text-xs font-bold leading-none transition-colors",
-                                isOpen ? "text-white" : "text-slate-500"
+                {exp.itinerary!.length === 1 ? (
+                  /* ── Single-day flat card ─────────────────────────────── */
+                  (() => {
+                    const day = exp.itinerary![0];
+                    return (
+                      <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        {/* Card header */}
+                        {day.title && (
+                          <div className="bg-gradient-to-r from-primary/8 to-transparent px-5 py-4 border-b border-slate-100">
+                            <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">Schedule</p>
+                            <h3 className="text-sm font-bold text-slate-900 leading-snug">{day.title}</h3>
+                          </div>
+                        )}
+                        {/* Card body */}
+                        <div className="p-5">
+                          {day.description && (
+                            <div className="flex gap-2.5 mb-5">
+                              <div className="shrink-0 w-0.5 rounded-full bg-primary/40 self-stretch" />
+                              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{day.description}</p>
+                            </div>
+                          )}
+                          {day.slots && day.slots.length > 0 && (
+                            <div>
+                              {day.slots.map((slot, si) => {
+                                const isLast = si === day.slots!.length - 1;
+                                const t = slot.time.toLowerCase();
+                                const slotStyle =
+                                  t === "morning"   ? { Icon: Sun,      bg: "bg-amber-50",   ring: "ring-amber-100",  text: "text-amber-600"  } :
+                                  t === "afternoon" ? { Icon: CloudSun, bg: "bg-sky-50",     ring: "ring-sky-100",    text: "text-sky-600"    } :
+                                  t === "evening"   ? { Icon: Sunset,   bg: "bg-orange-50",  ring: "ring-orange-100", text: "text-orange-500" } :
+                                  t === "night"     ? { Icon: Moon,     bg: "bg-violet-50",  ring: "ring-violet-100", text: "text-violet-600" } :
+                                                      { Icon: Clock,    bg: "bg-primary/10", ring: "ring-primary/15", text: "text-primary"    };
+                                return (
+                                  <div key={si} className="flex gap-3">
+                                    <div className="shrink-0 flex flex-col items-center" style={{ width: 32 }}>
+                                      <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0 ring-2", slotStyle.bg, slotStyle.ring)}>
+                                        <slotStyle.Icon className={cn("h-3.5 w-3.5", slotStyle.text)} />
+                                      </div>
+                                      {!isLast && <div className="w-px flex-1 min-h-[20px] bg-gradient-to-b from-slate-200 to-transparent mt-1" />}
+                                    </div>
+                                    <div className={cn("flex-1 min-w-0", !isLast && "pb-4")}>
+                                      <p className={cn("text-[11px] font-bold uppercase tracking-widest mb-1.5", slotStyle.text)}>{slot.time}</p>
+                                      <p className="text-sm text-slate-600 leading-relaxed">{slot.description}</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {!day.description && (!day.slots || day.slots.length === 0) && (
+                            <p className="text-sm text-slate-400 italic">No schedule details added yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  /* ── Multi-day timeline accordion ─────────────────────── */
+                  <div className="relative">
+                    <div className="absolute left-[19px] top-5 bottom-5 w-0.5 bg-gradient-to-b from-primary/60 via-primary/20 to-transparent" />
+                    <div className="space-y-3">
+                      {exp.itinerary!.map((day, index) => {
+                        const isOpen = openDay === index;
+                        return (
+                          <div key={index} className="relative flex gap-4">
+                            {/* Day circle */}
+                            <div className="relative shrink-0 flex flex-col items-center" style={{ width: 40 }}>
+                              <div className={cn(
+                                "h-10 w-10 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 shrink-0",
+                                isOpen ? "bg-primary border-primary shadow-lg shadow-primary/25" : "bg-white border-slate-200 hover:border-primary/50"
                               )}>
-                                {String(day.day).padStart(2, "0")}
-                              </span>
+                                <span className={cn("text-xs font-bold leading-none transition-colors", isOpen ? "text-white" : "text-slate-500")}>
+                                  {String(day.day).padStart(2, "0")}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Card */}
+                            <div className={cn(
+                              "flex-1 rounded-2xl border transition-all duration-200 overflow-hidden mb-1",
+                              isOpen ? "border-primary/25 shadow-md shadow-primary/8 bg-white" : "border-slate-200 bg-white hover:border-primary/25 hover:shadow-sm"
+                            )}>
+                              <button
+                                type="button"
+                                onClick={() => setOpenDay(isOpen ? null : index)}
+                                className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className={cn("text-[11px] font-bold uppercase tracking-widest mb-0.5 transition-colors", isOpen ? "text-primary" : "text-slate-400")}>
+                                    Day {day.day}
+                                  </p>
+                                  <p className="text-sm font-semibold text-slate-900 leading-snug">{day.title}</p>
+                                </div>
+                                <div className={cn("shrink-0 h-7 w-7 rounded-full flex items-center justify-center transition-all duration-200", isOpen ? "bg-primary/15 text-primary rotate-180" : "bg-slate-100 text-slate-400")}>
+                                  <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                </div>
+                              </button>
+
+                              <AnimatePresence initial={false}>
+                                {isOpen && (
+                                  <motion.div
+                                    key="content"
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="px-4 pb-5 pt-0">
+                                      <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-4" />
+                                      {day.description && (
+                                        <div className="flex gap-2.5 mb-4">
+                                          <div className="shrink-0 w-0.5 rounded-full bg-primary/40 self-stretch" />
+                                          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{day.description}</p>
+                                        </div>
+                                      )}
+                                      {day.slots && day.slots.length > 0 && (
+                                        <div>
+                                          {day.slots.map((slot, si) => {
+                                            const isLast = si === day.slots!.length - 1;
+                                            const t = slot.time.toLowerCase();
+                                            const slotStyle =
+                                              t === "morning"   ? { Icon: Sun,      bg: "bg-amber-50",   ring: "ring-amber-100",  text: "text-amber-600"  } :
+                                              t === "afternoon" ? { Icon: CloudSun, bg: "bg-sky-50",     ring: "ring-sky-100",    text: "text-sky-600"    } :
+                                              t === "evening"   ? { Icon: Sunset,   bg: "bg-orange-50",  ring: "ring-orange-100", text: "text-orange-500" } :
+                                              t === "night"     ? { Icon: Moon,     bg: "bg-violet-50",  ring: "ring-violet-100", text: "text-violet-600" } :
+                                                                  { Icon: Clock,    bg: "bg-primary/10", ring: "ring-primary/15", text: "text-primary"    };
+                                            return (
+                                              <div key={si} className="flex gap-3">
+                                                <div className="shrink-0 flex flex-col items-center" style={{ width: 32 }}>
+                                                  <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0 ring-2", slotStyle.bg, slotStyle.ring)}>
+                                                    <slotStyle.Icon className={cn("h-3.5 w-3.5", slotStyle.text)} />
+                                                  </div>
+                                                  {!isLast && <div className="w-px flex-1 min-h-[20px] bg-gradient-to-b from-slate-200 to-transparent mt-1" />}
+                                                </div>
+                                                <div className={cn("flex-1 min-w-0", !isLast && "pb-4")}>
+                                                  <p className={cn("text-[11px] font-bold uppercase tracking-widest mb-1.5", slotStyle.text)}>{slot.time}</p>
+                                                  <p className="text-sm text-slate-600 leading-relaxed">{slot.description}</p>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           </div>
-
-                          {/* Card */}
-                          <div className={cn(
-                            "flex-1 rounded-2xl border transition-all duration-200 overflow-hidden mb-1",
-                            isOpen
-                              ? "border-primary/25 shadow-md shadow-primary/8 bg-white"
-                              : "border-slate-200 bg-white hover:border-primary/25 hover:shadow-sm"
-                          )}>
-                            <button
-                              type="button"
-                              onClick={() => setOpenDay(isOpen ? null : index)}
-                              className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <p className={cn(
-                                  "text-[11px] font-bold uppercase tracking-widest mb-0.5 transition-colors",
-                                  isOpen ? "text-primary" : "text-slate-400"
-                                )}>
-                                  Day {day.day}
-                                </p>
-                                <p className="text-sm font-semibold text-slate-900 leading-snug">
-                                  {day.title}
-                                </p>
-                              </div>
-                              <div className={cn(
-                                "shrink-0 h-7 w-7 rounded-full flex items-center justify-center transition-all duration-200",
-                                isOpen ? "bg-primary/15 text-primary rotate-180" : "bg-slate-100 text-slate-400"
-                              )}>
-                                <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-                              </div>
-                            </button>
-
-                            <AnimatePresence initial={false}>
-                              {isOpen && (
-                                <motion.div
-                                  key="content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="px-4 pb-5 pt-0">
-                                    <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-4" />
-                                    {day.description && (
-                                      <div className="flex gap-2.5 mb-4">
-                                        <div className="shrink-0 w-0.5 rounded-full bg-primary/40 self-stretch" />
-                                        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{day.description}</p>
-                                      </div>
-                                    )}
-                                    {day.slots && day.slots.length > 0 && (
-                                      <div>
-                                        {day.slots.map((slot, si) => {
-                                          const isLast = si === day.slots!.length - 1;
-                                          const t = slot.time.toLowerCase();
-                                          const slotStyle =
-                                            t === "morning"   ? { Icon: Sun,     bg: "bg-amber-50",   ring: "ring-amber-100",   text: "text-amber-600"   } :
-                                            t === "afternoon" ? { Icon: CloudSun, bg: "bg-sky-50",     ring: "ring-sky-100",     text: "text-sky-600"     } :
-                                            t === "evening"   ? { Icon: Sunset,   bg: "bg-orange-50",  ring: "ring-orange-100",  text: "text-orange-500"  } :
-                                            t === "night"     ? { Icon: Moon,     bg: "bg-violet-50",  ring: "ring-violet-100",  text: "text-violet-600"  } :
-                                                                { Icon: Clock,    bg: "bg-primary/10", ring: "ring-primary/15",  text: "text-primary"     };
-                                          return (
-                                            <div key={si} className="flex gap-3">
-                                              <div className="shrink-0 flex flex-col items-center" style={{ width: 32 }}>
-                                                <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0 ring-2", slotStyle.bg, slotStyle.ring)}>
-                                                  <slotStyle.Icon className={cn("h-3.5 w-3.5", slotStyle.text)} />
-                                                </div>
-                                                {!isLast && <div className="w-px flex-1 min-h-[20px] bg-gradient-to-b from-slate-200 to-transparent mt-1" />}
-                                              </div>
-                                              <div className={cn("flex-1 min-w-0", !isLast && "pb-4")}>
-                                                <p className={cn("text-[11px] font-bold uppercase tracking-widest mb-1.5", slotStyle.text)}>{slot.time}</p>
-                                                <p className="text-sm text-slate-600 leading-relaxed">{slot.description}</p>
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </section>
             )}
 
