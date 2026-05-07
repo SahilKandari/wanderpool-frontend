@@ -489,7 +489,6 @@ export default function AdminReviewsPage() {
         </div>
       ) : !reviews || reviews.length === 0 ? (
         <EmptyState
-          icon={<Star className="h-8 w-8 text-muted-foreground" />}
           title="No reviews yet"
           description={
             flaggedOnly
