@@ -8,6 +8,8 @@ export const reviewKeys = {
   forCustomer: () => [...reviewKeys.all, "mine"] as const,
   forAgency: (params?: Record<string, string>) =>
     [...reviewKeys.all, "agency", params] as const,
+  forAdmin: (params?: Record<string, string>) =>
+    [...reviewKeys.all, "admin", params] as const,
   eligible: (experienceId: string) =>
     [...reviewKeys.all, "eligible", experienceId] as const,
 };
@@ -73,5 +75,34 @@ export async function adminToggleReviewVisibility(
   return apiFetch(`/admin/reviews/${reviewId}/visibility`, {
     method: "PATCH",
     body: JSON.stringify({ is_visible: isVisible }),
+  });
+}
+
+export async function adminGetReviews(params?: {
+  flagged?: boolean;
+  page?: number;
+}): Promise<Review[]> {
+  const q = new URLSearchParams();
+  if (params?.flagged) q.set("flagged", "true");
+  if (params?.page) q.set("page", String(params.page));
+  const qs = q.toString();
+  return apiFetch(`/admin/reviews${qs ? `?${qs}` : ""}`);
+}
+
+export interface AdminCreateReviewPayload {
+  experience_id: string;
+  reviewer_name: string;
+  rating: number;
+  body: string;
+  operator_reply?: string;
+  created_at?: string;
+}
+
+export async function adminCreateReview(
+  payload: AdminCreateReviewPayload
+): Promise<Review> {
+  return apiFetch("/admin/reviews", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

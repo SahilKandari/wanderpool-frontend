@@ -1,6 +1,6 @@
 export interface Review {
   id: string;
-  booking_id: string;
+  booking_id: string | null;
   experience_id: string;
   rating: number;
   body: string | null;
@@ -9,6 +9,8 @@ export interface Review {
   is_visible: boolean;
   is_flagged: boolean;
   created_at: string;
+  reviewer_name?: string | null;
+  is_admin_seeded?: boolean;
   // enriched
   customer_name: string;
   experience_title?: string;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, Map, BookOpen, CalendarDays, FolderTree, Shield, CreditCard, Settings } from "lucide-react";
+import { LayoutDashboard, Building2, Map, BookOpen, CalendarDays, FolderTree, Shield, CreditCard, Settings, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { Logo } from "@/components/shared/Logo";
@@ -12,6 +12,7 @@ const navItems = [
   { label: "Agencies",     href: "/admin/agencies",      icon: Building2 },
   { label: "Experiences",  href: "/admin/experiences",   icon: Map },
   { label: "Bookings",     href: "/admin/bookings",      icon: BookOpen },
+  { label: "Reviews",      href: "/admin/reviews",       icon: MessageSquare },
   { label: "Schedule",     href: "/admin/schedule",      icon: CalendarDays },
   { label: "Categories",   href: "/admin/categories",    icon: FolderTree },
   { label: "Payouts",      href: "/admin/payouts",       icon: CreditCard },
