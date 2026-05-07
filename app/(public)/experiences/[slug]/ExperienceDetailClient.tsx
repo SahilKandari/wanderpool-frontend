@@ -31,6 +31,10 @@ import {
   Route,
   X,
   Expand,
+  Sun,
+  CloudSun,
+  Sunset,
+  Moon,
 } from "lucide-react";
 import { getExperienceBySlug, experienceKeys } from "@/lib/api/experiences";
 import {
@@ -591,23 +595,40 @@ export default function ExperienceDetailClient({
                                   transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="px-4 pb-4 pt-0">
-                                    <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-3" />
+                                  <div className="px-4 pb-5 pt-0">
+                                    <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-4" />
                                     {day.description && (
-                                      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line mb-3">
-                                        {day.description}
-                                      </p>
+                                      <div className="flex gap-2.5 mb-4">
+                                        <div className="shrink-0 w-0.5 rounded-full bg-primary/40 self-stretch" />
+                                        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{day.description}</p>
+                                      </div>
                                     )}
                                     {day.slots && day.slots.length > 0 && (
-                                      <div className="space-y-3">
-                                        {day.slots.map((slot, si) => (
-                                          <div key={si} className="flex gap-3">
-                                            <span className="shrink-0 mt-0.5 text-[11px] font-bold uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full h-fit whitespace-nowrap">
-                                              {slot.time}
-                                            </span>
-                                            <p className="text-sm text-slate-600 leading-relaxed">{slot.description}</p>
-                                          </div>
-                                        ))}
+                                      <div>
+                                        {day.slots.map((slot, si) => {
+                                          const isLast = si === day.slots!.length - 1;
+                                          const t = slot.time.toLowerCase();
+                                          const slotStyle =
+                                            t === "morning"   ? { Icon: Sun,     bg: "bg-amber-50",   ring: "ring-amber-100",   text: "text-amber-600"   } :
+                                            t === "afternoon" ? { Icon: CloudSun, bg: "bg-sky-50",     ring: "ring-sky-100",     text: "text-sky-600"     } :
+                                            t === "evening"   ? { Icon: Sunset,   bg: "bg-orange-50",  ring: "ring-orange-100",  text: "text-orange-500"  } :
+                                            t === "night"     ? { Icon: Moon,     bg: "bg-violet-50",  ring: "ring-violet-100",  text: "text-violet-600"  } :
+                                                                { Icon: Clock,    bg: "bg-primary/10", ring: "ring-primary/15",  text: "text-primary"     };
+                                          return (
+                                            <div key={si} className="flex gap-3">
+                                              <div className="shrink-0 flex flex-col items-center" style={{ width: 32 }}>
+                                                <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0 ring-2", slotStyle.bg, slotStyle.ring)}>
+                                                  <slotStyle.Icon className={cn("h-3.5 w-3.5", slotStyle.text)} />
+                                                </div>
+                                                {!isLast && <div className="w-px flex-1 min-h-[20px] bg-gradient-to-b from-slate-200 to-transparent mt-1" />}
+                                              </div>
+                                              <div className={cn("flex-1 min-w-0", !isLast && "pb-4")}>
+                                                <p className={cn("text-[11px] font-bold uppercase tracking-widest mb-1.5", slotStyle.text)}>{slot.time}</p>
+                                                <p className="text-sm text-slate-600 leading-relaxed">{slot.description}</p>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     )}
                                   </div>
