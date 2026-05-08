@@ -48,11 +48,15 @@ export async function createReview(payload: {
 export async function getAgencyReviews(params?: {
   experience_id?: string;
   rating?: string;
+  reply_status?: string;
+  sort?: string;
   page?: number;
 }): Promise<Review[]> {
   const q = new URLSearchParams();
   if (params?.experience_id) q.set("experience_id", params.experience_id);
   if (params?.rating) q.set("rating", params.rating);
+  if (params?.reply_status) q.set("reply_status", params.reply_status);
+  if (params?.sort) q.set("sort", params.sort);
   if (params?.page) q.set("page", String(params.page));
   const qs = q.toString();
   return apiFetch(`/agency/reviews${qs ? `?${qs}` : ""}`);
@@ -81,11 +85,15 @@ export async function adminToggleReviewVisibility(
 export async function adminGetReviews(params?: {
   flagged?: boolean;
   rating?: string;
+  visibility?: string;
+  sort?: string;
   page?: number;
 }): Promise<Review[]> {
   const q = new URLSearchParams();
   if (params?.flagged) q.set("flagged", "true");
   if (params?.rating) q.set("rating", params.rating);
+  if (params?.visibility) q.set("visibility", params.visibility);
+  if (params?.sort) q.set("sort", params.sort);
   if (params?.page) q.set("page", String(params.page));
   const qs = q.toString();
   return apiFetch(`/admin/reviews${qs ? `?${qs}` : ""}`);

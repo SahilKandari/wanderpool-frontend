@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -184,31 +184,23 @@ function ReviewCard({ review }: { review: Review }) {
 }
 
 export default function AgencyReviewsPage() {
+  const qc = useQueryClient();
   const [ratingFilter, setRatingFilter] = useState("all");
   const [replyStatus, setReplyStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
   const { data: reviews = [], isLoading } = useQuery({
-    queryKey: reviewKeys.forAgency({ rating: ratingFilter }),
+    queryKey: reviewKeys.forAgency({ rating: ratingFilter, reply_status: replyStatus, sort: sortBy }),
     queryFn: () =>
-      getAgencyReviews({ rating: ratingFilter === "all" ? undefined : ratingFilter }),
+      getAgencyReviews({
+        rating: ratingFilter !== "all" ? ratingFilter : undefined,
+        reply_status: replyStatus !== "all" ? replyStatus : undefined,
+        sort: sortBy !== "newest" ? sortBy : undefined,
+      }),
   });
 
-  const displayed = useMemo(() => {
-    let result = [...reviews];
-    if (replyStatus === "replied") result = result.filter((r) => !!r.operator_reply);
-    if (replyStatus === "unreplied") result = result.filter((r) => !r.operator_reply);
-    if (sortBy === "newest")
-      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    else if (sortBy === "oldest")
-      result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    else if (sortBy === "highest")
-      result.sort((a, b) => b.rating - a.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    else if (sortBy === "lowest")
-      result.sort((a, b) => a.rating - b.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return result;
-  }, [reviews, replyStatus, sortBy]);
-
+  // Stats always from unfiltered data would require a separate query;
+  // derive from current result as a best-effort indicator.
   const avgRating = reviews.length > 0
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : 0;
@@ -222,6 +214,7 @@ export default function AgencyReviewsPage() {
     setRatingFilter("all");
     setReplyStatus("all");
     setSortBy("newest");
+    qc.invalidateQueries({ queryKey: reviewKeys.all });
   }
 
   return (
@@ -310,7 +303,7 @@ export default function AgencyReviewsPage() {
         )}
 
         <span className="text-xs text-muted-foreground ml-auto">
-          {displayed.length} of {reviews.length} review{reviews.length !== 1 ? "s" : ""}
+          {reviews.length} review{reviews.length !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -321,18 +314,18 @@ export default function AgencyReviewsPage() {
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
-      ) : displayed.length === 0 ? (
+      ) : reviews.length === 0 ? (
         <EmptyState
           title="No reviews match"
           description={
-            reviews.length === 0
-              ? "Reviews from guests who have completed bookings will appear here."
-              : "Try adjusting your filters."
+            hasActiveFilters
+              ? "Try adjusting your filters."
+              : "Reviews from guests who have completed bookings will appear here."
           }
         />
       ) : (
         <div className="space-y-4">
-          {displayed.map((review) => (
+          {reviews.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </div>

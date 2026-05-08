@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -433,6 +433,7 @@ function AddReviewDialog({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminReviewsPage() {
+  const qc = useQueryClient();
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [ratingFilter, setRatingFilter] = useState("all");
   const [visibilityFilter, setVisibilityFilter] = useState("all");
@@ -444,30 +445,19 @@ export default function AdminReviewsPage() {
     queryKey: reviewKeys.forAdmin({
       flagged: String(flaggedOnly),
       rating: ratingFilter,
+      visibility: visibilityFilter,
+      sort: sortBy,
       page: String(page),
     }),
     queryFn: () =>
       adminGetReviews({
         ...(flaggedOnly && { flagged: true }),
         ...(ratingFilter !== "all" && { rating: ratingFilter }),
+        ...(visibilityFilter !== "all" && { visibility: visibilityFilter }),
+        ...(sortBy !== "newest" && { sort: sortBy }),
         page,
       }),
   });
-
-  const displayed = useMemo(() => {
-    let result = [...(reviews ?? [])];
-    if (visibilityFilter === "visible") result = result.filter((r) => r.is_visible);
-    if (visibilityFilter === "hidden") result = result.filter((r) => !r.is_visible);
-    if (sortBy === "newest")
-      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    else if (sortBy === "oldest")
-      result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    else if (sortBy === "highest")
-      result.sort((a, b) => b.rating - a.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    else if (sortBy === "lowest")
-      result.sort((a, b) => a.rating - b.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return result;
-  }, [reviews, visibilityFilter, sortBy]);
 
   const PAGE_SIZE = 20;
   const hasMore = (reviews?.length ?? 0) === PAGE_SIZE;
@@ -481,6 +471,7 @@ export default function AdminReviewsPage() {
     setVisibilityFilter("all");
     setSortBy("newest");
     setPage(1);
+    qc.invalidateQueries({ queryKey: reviewKeys.all });
   }
 
   return (
@@ -563,7 +554,7 @@ export default function AdminReviewsPage() {
         )}
 
         <span className="text-xs text-muted-foreground ml-auto">
-          {displayed.length}{visibilityFilter !== "all" ? ` of ${reviews?.length ?? 0}` : ""} review{(displayed.length !== 1) ? "s" : ""}
+          {reviews?.length ?? 0} review{(reviews?.length ?? 0) !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -574,20 +565,20 @@ export default function AdminReviewsPage() {
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
-      ) : displayed.length === 0 ? (
+      ) : !reviews || reviews.length === 0 ? (
         <EmptyState
           title="No reviews match"
           description={
-            !reviews || reviews.length === 0
-              ? flaggedOnly
-                ? "No flagged reviews at the moment."
-                : "No reviews have been submitted yet."
-              : "Try adjusting your filters."
+            hasActiveFilters
+              ? "Try adjusting your filters."
+              : flaggedOnly
+              ? "No flagged reviews at the moment."
+              : "No reviews have been submitted yet."
           }
         />
       ) : (
         <div className="space-y-4">
-          {displayed.map((review) => (
+          {reviews.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </div>
