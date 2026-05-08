@@ -84,7 +84,11 @@ function buildGallery(exp: { cover_image_url?: string | null; images?: { url: st
   return PLACEHOLDER_IMAGES;
 }
 
-function durationLabel(minutes: number) {
+function durationLabel(minutes: number, dayCount?: number) {
+  if (dayCount && dayCount > 1) {
+    const h = Math.round(minutes / 60);
+    return `${h} hrs/Day`;
+  }
   if (minutes < 60) return `${minutes} min`;
   if (minutes < 1440) {
     const h = Math.round(minutes / 60);
@@ -416,7 +420,7 @@ export default function ExperienceDetailClient({
                 <div className="flex flex-wrap gap-4 text-sm text-slate-600">
                   <span className="flex items-center gap-1.5">
                     <Clock className="h-4 w-4 text-slate-400" />
-                    {durationLabel(exp.duration_minutes)}
+                    {durationLabel(exp.duration_minutes, exp.itinerary?.length)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Users className="h-4 w-4 text-slate-400" />

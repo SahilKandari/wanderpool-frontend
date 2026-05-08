@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, type Control, type FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -122,10 +123,11 @@ function FieldInput({
                 hasError={!!fieldState.error}
               />
             ) : (
-              <Input
+              <Textarea
                 value={f.value ?? ""}
                 onChange={f.onChange}
-                className={cn(fieldState.error && "border-destructive")}
+                rows={3}
+                className={cn("resize-none", fieldState.error && "border-destructive")}
               />
             )}
             {fieldState.error && (

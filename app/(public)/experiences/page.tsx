@@ -53,7 +53,11 @@ const PRICE_FILTERS = [
   { label: "Under ₹4,999", value: "4999" },
 ];
 
-function durationLabel(minutes: number) {
+function durationLabel(minutes: number, dayCount?: number) {
+  if (dayCount && dayCount > 1) {
+    const h = Math.round(minutes / 60);
+    return `${h} hrs/Day`;
+  }
   if (minutes < 60) return `${minutes} min`;
   if (minutes < 1440) {
     const h = Math.round(minutes / 60);
@@ -111,7 +115,7 @@ function ExperienceCard({ exp, index }: { exp: Experience; index: number }) {
           {/* Duration badge */}
           <span className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {durationLabel(exp.duration_minutes)}
+            {durationLabel(exp.duration_minutes, exp.itinerary?.length)}
           </span>
         </div>
 

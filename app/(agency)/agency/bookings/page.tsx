@@ -236,8 +236,8 @@ function BookingDetailDialog({
             </p>
           </div>
 
-          {/* Start/Complete actions — solo operators only */}
-          {isSoloOperator && booking.status === "confirmed" && (
+          {/* Start/Complete actions — all agency accounts */}
+          {booking.status === "confirmed" && (
             <div className="rounded-lg border p-3 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Activity</p>
               {cashPending && (
@@ -848,7 +848,7 @@ export default function AgencyBookingsPage() {
                         <Eye className="h-3.5 w-3.5 mr-1" />
                         View
                       </Button>
-                      {isSoloOperator && b.status === "confirmed" && !b.activity_started_at && (
+                      {b.status === "confirmed" && !b.activity_started_at && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -861,7 +861,7 @@ export default function AgencyBookingsPage() {
                           Start
                         </Button>
                       )}
-                      {isSoloOperator && !!b.activity_started_at && !b.activity_completed_at && (
+                      {!!b.activity_started_at && !b.activity_completed_at && (
                         <Button
                           variant="ghost"
                           size="sm"

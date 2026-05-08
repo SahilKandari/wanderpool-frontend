@@ -618,7 +618,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA BANNER ────────────────────────────────────────────────────── */}
-      <section className="mx-4 sm:mx-6 lg:mx-8 mb-16 max-w-7xl md:mx-auto">
+      <section className="mb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           whileInView={{ opacity: 1, scale: 1 }}
