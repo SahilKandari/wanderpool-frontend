@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -11,6 +11,8 @@ import {
   Send,
   Loader2,
   X,
+  ArrowUpDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -102,10 +104,9 @@ function ReviewCard({ review }: { review: Review }) {
       </div>
 
       {/* Body */}
-      {review.body && (
+      {review.body ? (
         <p className="text-sm text-muted-foreground leading-relaxed">{review.body}</p>
-      )}
-      {!review.body && (
+      ) : (
         <p className="text-sm text-muted-foreground/50 italic">No written review.</p>
       )}
 
@@ -139,12 +140,7 @@ function ReviewCard({ review }: { review: Review }) {
             className="text-sm resize-none"
           />
           <div className="flex items-center justify-between">
-            <span
-              className={cn(
-                "text-xs",
-                replyText.length > 270 ? "text-amber-500" : "text-muted-foreground"
-              )}
-            >
+            <span className={cn("text-xs", replyText.length > 270 ? "text-amber-500" : "text-muted-foreground")}>
               {replyText.length}/300
             </span>
             <div className="flex gap-2">
@@ -189,6 +185,8 @@ function ReviewCard({ review }: { review: Review }) {
 
 export default function AgencyReviewsPage() {
   const [ratingFilter, setRatingFilter] = useState("all");
+  const [replyStatus, setReplyStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
 
   const { data: reviews = [], isLoading } = useQuery({
     queryKey: reviewKeys.forAgency({ rating: ratingFilter }),
@@ -196,12 +194,35 @@ export default function AgencyReviewsPage() {
       getAgencyReviews({ rating: ratingFilter === "all" ? undefined : ratingFilter }),
   });
 
-  const avgRating =
-    reviews.length > 0
-      ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-      : 0;
+  const displayed = useMemo(() => {
+    let result = [...reviews];
+    if (replyStatus === "replied") result = result.filter((r) => !!r.operator_reply);
+    if (replyStatus === "unreplied") result = result.filter((r) => !r.operator_reply);
+    if (sortBy === "newest")
+      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    else if (sortBy === "oldest")
+      result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    else if (sortBy === "highest")
+      result.sort((a, b) => b.rating - a.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    else if (sortBy === "lowest")
+      result.sort((a, b) => a.rating - b.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return result;
+  }, [reviews, replyStatus, sortBy]);
+
+  const avgRating = reviews.length > 0
+    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+    : 0;
   const flaggedCount = reviews.filter((r) => r.is_flagged).length;
   const unrepliedCount = reviews.filter((r) => !r.operator_reply).length;
+
+  const hasActiveFilters =
+    ratingFilter !== "all" || replyStatus !== "all" || sortBy !== "newest";
+
+  function clearFilters() {
+    setRatingFilter("all");
+    setReplyStatus("all");
+    setSortBy("newest");
+  }
 
   return (
     <div>
@@ -240,33 +261,56 @@ export default function AgencyReviewsPage() {
         ))}
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-3 mb-5">
-        <Select value={ratingFilter} onValueChange={setRatingFilter}>
-          <SelectTrigger className="w-44">
+      {/* Filters + Sort */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <SlidersHorizontal className="h-4 w-4 text-muted-foreground shrink-0" />
+
+        <Select value={ratingFilter} onValueChange={(v) => setRatingFilter(v)}>
+          <SelectTrigger className="w-36 h-8 text-xs">
             <SelectValue placeholder="All ratings" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All ratings</SelectItem>
-            <SelectItem value="5">5 stars</SelectItem>
-            <SelectItem value="4">4 stars</SelectItem>
-            <SelectItem value="3">3 stars</SelectItem>
-            <SelectItem value="2">2 stars</SelectItem>
-            <SelectItem value="1">1 star</SelectItem>
+            <SelectItem value="5">★★★★★  5 stars</SelectItem>
+            <SelectItem value="4">★★★★☆  4 stars</SelectItem>
+            <SelectItem value="3">★★★☆☆  3 stars</SelectItem>
+            <SelectItem value="2">★★☆☆☆  2 stars</SelectItem>
+            <SelectItem value="1">★☆☆☆☆  1 star</SelectItem>
           </SelectContent>
         </Select>
-        {ratingFilter !== "all" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => setRatingFilter("all")}
-          >
-            <X className="h-3.5 w-3.5 mr-1" /> Clear
+
+        <Select value={replyStatus} onValueChange={(v) => setReplyStatus(v)}>
+          <SelectTrigger className="w-40 h-8 text-xs">
+            <SelectValue placeholder="All replies" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All replies</SelectItem>
+            <SelectItem value="unreplied">Awaiting reply</SelectItem>
+            <SelectItem value="replied">Replied</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v)}>
+          <SelectTrigger className="w-40 h-8 text-xs">
+            <ArrowUpDown className="h-3 w-3 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest first</SelectItem>
+            <SelectItem value="oldest">Oldest first</SelectItem>
+            <SelectItem value="highest">Highest rating</SelectItem>
+            <SelectItem value="lowest">Lowest rating</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground px-2" onClick={clearFilters}>
+            <X className="h-3 w-3 mr-1" /> Clear
           </Button>
         )}
-        <span className="text-sm text-muted-foreground ml-auto">
-          {reviews.length} review{reviews.length !== 1 ? "s" : ""}
+
+        <span className="text-xs text-muted-foreground ml-auto">
+          {displayed.length} of {reviews.length} review{reviews.length !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -277,14 +321,18 @@ export default function AgencyReviewsPage() {
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
-      ) : reviews.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <EmptyState
-          title="No reviews yet"
-          description="Reviews from guests who have completed bookings will appear here."
+          title="No reviews match"
+          description={
+            reviews.length === 0
+              ? "Reviews from guests who have completed bookings will appear here."
+              : "Try adjusting your filters."
+          }
         />
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {displayed.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </div>

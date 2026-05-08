@@ -80,10 +80,12 @@ export async function adminToggleReviewVisibility(
 
 export async function adminGetReviews(params?: {
   flagged?: boolean;
+  rating?: string;
   page?: number;
 }): Promise<Review[]> {
   const q = new URLSearchParams();
   if (params?.flagged) q.set("flagged", "true");
+  if (params?.rating) q.set("rating", params.rating);
   if (params?.page) q.set("page", String(params.page));
   const qs = q.toString();
   return apiFetch(`/admin/reviews${qs ? `?${qs}` : ""}`);

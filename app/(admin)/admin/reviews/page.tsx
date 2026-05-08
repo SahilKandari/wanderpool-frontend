@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -14,6 +14,9 @@ import {
   ChevronRight,
   MessageSquare,
   Sparkles,
+  ArrowUpDown,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -431,21 +434,54 @@ function AddReviewDialog({
 
 export default function AdminReviewsPage() {
   const [flaggedOnly, setFlaggedOnly] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [visibilityFilter, setVisibilityFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
 
-  const params = {
-    ...(flaggedOnly && { flagged: true }),
-    page,
-  };
-
   const { data: reviews, isLoading } = useQuery({
-    queryKey: reviewKeys.forAdmin({ flagged: String(flaggedOnly), page: String(page) }),
-    queryFn: () => adminGetReviews(params),
+    queryKey: reviewKeys.forAdmin({
+      flagged: String(flaggedOnly),
+      rating: ratingFilter,
+      page: String(page),
+    }),
+    queryFn: () =>
+      adminGetReviews({
+        ...(flaggedOnly && { flagged: true }),
+        ...(ratingFilter !== "all" && { rating: ratingFilter }),
+        page,
+      }),
   });
+
+  const displayed = useMemo(() => {
+    let result = [...(reviews ?? [])];
+    if (visibilityFilter === "visible") result = result.filter((r) => r.is_visible);
+    if (visibilityFilter === "hidden") result = result.filter((r) => !r.is_visible);
+    if (sortBy === "newest")
+      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    else if (sortBy === "oldest")
+      result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    else if (sortBy === "highest")
+      result.sort((a, b) => b.rating - a.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    else if (sortBy === "lowest")
+      result.sort((a, b) => a.rating - b.rating || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return result;
+  }, [reviews, visibilityFilter, sortBy]);
 
   const PAGE_SIZE = 20;
   const hasMore = (reviews?.length ?? 0) === PAGE_SIZE;
+
+  const hasActiveFilters =
+    flaggedOnly || ratingFilter !== "all" || visibilityFilter !== "all" || sortBy !== "newest";
+
+  function clearFilters() {
+    setFlaggedOnly(false);
+    setRatingFilter("all");
+    setVisibilityFilter("all");
+    setSortBy("newest");
+    setPage(1);
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -460,24 +496,75 @@ export default function AdminReviewsPage() {
         }
       />
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 mb-6">
+      {/* Filters + Sort */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <SlidersHorizontal className="h-4 w-4 text-muted-foreground shrink-0" />
+
+        {/* Flagged toggle */}
         <button
           type="button"
-          onClick={() => {
-            setFlaggedOnly(!flaggedOnly);
-            setPage(1);
-          }}
+          onClick={() => { setFlaggedOnly(!flaggedOnly); setPage(1); }}
           className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
+            "flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium border transition-colors",
             flaggedOnly
               ? "bg-red-50 border-red-200 text-red-700"
               : "bg-card border-border text-slate-600 hover:border-slate-300"
           )}
         >
-          <Flag className="h-3.5 w-3.5" />
-          Flagged only
+          <Flag className="h-3 w-3" />
+          Flagged
         </button>
+
+        {/* Rating */}
+        <Select value={ratingFilter} onValueChange={(v) => { setRatingFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-36 h-8 text-xs">
+            <SelectValue placeholder="All ratings" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All ratings</SelectItem>
+            <SelectItem value="5">★★★★★  5 stars</SelectItem>
+            <SelectItem value="4">★★★★☆  4 stars</SelectItem>
+            <SelectItem value="3">★★★☆☆  3 stars</SelectItem>
+            <SelectItem value="2">★★☆☆☆  2 stars</SelectItem>
+            <SelectItem value="1">★☆☆☆☆  1 star</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Visibility */}
+        <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+          <SelectTrigger className="w-36 h-8 text-xs">
+            <SelectValue placeholder="Visibility" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All visibility</SelectItem>
+            <SelectItem value="visible">Visible</SelectItem>
+            <SelectItem value="hidden">Hidden</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Sort */}
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-40 h-8 text-xs">
+            <ArrowUpDown className="h-3 w-3 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest first</SelectItem>
+            <SelectItem value="oldest">Oldest first</SelectItem>
+            <SelectItem value="highest">Highest rating</SelectItem>
+            <SelectItem value="lowest">Lowest rating</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground px-2" onClick={clearFilters}>
+            <X className="h-3 w-3 mr-1" /> Clear
+          </Button>
+        )}
+
+        <span className="text-xs text-muted-foreground ml-auto">
+          {displayed.length}{visibilityFilter !== "all" ? ` of ${reviews?.length ?? 0}` : ""} review{(displayed.length !== 1) ? "s" : ""}
+        </span>
       </div>
 
       {/* List */}
@@ -487,18 +574,20 @@ export default function AdminReviewsPage() {
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
-      ) : !reviews || reviews.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <EmptyState
-          title="No reviews yet"
+          title="No reviews match"
           description={
-            flaggedOnly
-              ? "No flagged reviews at the moment."
-              : "No reviews have been submitted yet."
+            !reviews || reviews.length === 0
+              ? flaggedOnly
+                ? "No flagged reviews at the moment."
+                : "No reviews have been submitted yet."
+              : "Try adjusting your filters."
           }
         />
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {displayed.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </div>
