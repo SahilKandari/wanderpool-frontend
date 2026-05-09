@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { AuthProvider } from "@/lib/providers/AuthProvider";
@@ -74,15 +75,17 @@ export default function RootLayout({
       <body className="min-h-full bg-background text-foreground" suppressHydrationWarning>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJsonLd }} />
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-        <QueryProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              {children}
-              <Toaster richColors position="top-right" />
-              <Analytics />
-            </NotificationProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}>
+          <QueryProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                {children}
+                <Toaster richColors position="top-right" />
+                <Analytics />
+              </NotificationProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

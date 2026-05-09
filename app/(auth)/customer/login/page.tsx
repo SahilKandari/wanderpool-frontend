@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/lib/providers/AuthProvider";
 
 const schema = z.object({
@@ -29,6 +30,33 @@ function CustomerLoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  async function handleGoogleSuccess(credentialResponse: { credential?: string }) {
+    if (!credentialResponse.credential) {
+      toast.error("Google sign-in failed. Please try again.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/google/customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Google sign-in failed");
+        return;
+      }
+      await refresh();
+      const next = searchParams.get("next") ?? "/customer/dashboard";
+      router.push(next);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function onSubmit(data: FormData) {
     setLoading(true);
@@ -64,6 +92,24 @@ function CustomerLoginForm() {
         <p className="text-slate-500 mt-1 text-sm">
           Sign in to your traveller account
         </p>
+      </div>
+
+      {/* Google sign-in */}
+      <div className="flex justify-center">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => toast.error("Google sign-in failed. Please try again.")}
+          text="signin_with"
+          shape="rectangular"
+          size="large"
+          width="100%"
+        />
+      </div>
+
+      <div className="relative flex items-center gap-3">
+        <div className="flex-1 h-px bg-slate-200" />
+        <span className="text-xs text-slate-400 shrink-0">or continue with email</span>
+        <div className="flex-1 h-px bg-slate-200" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
