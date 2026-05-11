@@ -2,6 +2,7 @@ import { apiFetch, publicFetch } from "./client";
 import type { Review, ReviewsResponse, EligibilityResponse } from "@/lib/types/review";
 
 export const reviewKeys = {
+  featured: () => ["reviews", "featured"] as const,
   all: ["reviews"] as const,
   forExperience: (id: string, page?: number) =>
     [...reviewKeys.all, "experience", id, page] as const,
@@ -13,6 +14,10 @@ export const reviewKeys = {
   eligible: (experienceId: string) =>
     [...reviewKeys.all, "eligible", experienceId] as const,
 };
+
+export async function getFeaturedReviews(): Promise<Review[]> {
+  return publicFetch("/reviews/featured");
+}
 
 export async function getExperienceReviews(
   experienceId: string,

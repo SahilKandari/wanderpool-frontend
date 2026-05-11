@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import {
   motion,
   useScroll,
@@ -12,80 +13,30 @@ import {
 } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getFeaturedReviews, reviewKeys } from "@/lib/api/reviews";
+import type { Review } from "@/lib/types/review";
 
-// ── Review data ────────────────────────────────────────────────────────────────
-const REVIEWS = [
-  {
-    id: 1,
-    name: "Priya Sharma",
-    initials: "PS",
-    color: "from-teal-500 to-emerald-400",
-    rating: 5,
-    text: "The river rafting was breathtaking. Our guide was professional and made sure everyone felt safe. Best 3 hours of my entire Uttarakhand trip — I'll be back next season.",
-    trip: "River Rafting — Grade IV",
-    date: "Apr 2025",
-    href: "/destinations/rishikesh",
-  },
-  {
-    id: 2,
-    name: "Arjun Mehta",
-    initials: "AM",
-    color: "from-blue-500 to-cyan-400",
-    rating: 5,
-    text: "Woke up above the clouds on day 2 of the trek. The guide knew every trail intimately and kept the whole group energised. One of the best decisions of my life.",
-    trip: "Nag Tibba Trek",
-    date: "Mar 2025",
-    href: "/experiences",
-  },
-  {
-    id: 3,
-    name: "Sneha Kapoor",
-    initials: "SK",
-    color: "from-rose-500 to-pink-400",
-    rating: 5,
-    text: "Magical experience under a canopy of stars. Campsite was pristine, food was excellent, and the WanderPool team was genuinely attentive throughout our stay.",
-    trip: "Camping & Bonfire — Chopta",
-    date: "Feb 2025",
-    href: "/experiences",
-  },
-  {
-    id: 4,
-    name: "Rahul Verma",
-    initials: "RV",
-    color: "from-amber-500 to-orange-400",
-    rating: 5,
-    text: "My first paragliding flight — terrifying for exactly 10 seconds, then the most peaceful feeling I've ever known. The instructor was calm and reassuring the entire time.",
-    trip: "Paragliding — Mussoorie",
-    date: "Jan 2025",
-    href: "/destinations/mussoorie",
-  },
-  {
-    id: 5,
-    name: "Ananya Singh",
-    initials: "AS",
-    color: "from-violet-500 to-purple-400",
-    rating: 5,
-    text: "Did the 83 m bungee jump. Pure unfiltered adrenaline. WanderPool made booking completely seamless and the ground team was absolutely phenomenal.",
-    trip: "Bungee Jumping — Rishikesh",
-    date: "Dec 2024",
-    href: "/destinations/rishikesh",
-  },
-  {
-    id: 6,
-    name: "Dev Malhotra",
-    initials: "DM",
-    color: "from-slate-600 to-slate-400",
-    rating: 4,
-    text: "Intense two-day kayaking course with world-class instructors. Arrived as a complete beginner and left with genuine white-water skills. Worth every rupee.",
-    trip: "White Water Kayaking",
-    date: "Nov 2024",
-    href: "/destinations/rishikesh",
-  },
+// ── Avatar colours cycling per card index ─────────────────────────────────────
+const AVATAR_COLORS = [
+  "from-teal-500 to-emerald-400",
+  "from-blue-500 to-cyan-400",
+  "from-rose-500 to-pink-400",
+  "from-amber-500 to-orange-400",
+  "from-violet-500 to-purple-400",
+  "from-slate-600 to-slate-400",
 ];
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+}
+
 // ── Desktop: DECK-TO-FAN config ────────────────────────────────────────────────
-// start = tight cluster (visible deck at progress=0), end = fanned positions.
-// Center cards have highest zOrder so they're always readable on top.
 type CardConfig = {
   startX: number; startY: number; startRot: number;
   endX:   number; endY:   number; endRot:   number;
@@ -141,13 +92,15 @@ function SectionHeader({ className }: { className?: string }) {
 // ── Desktop animated card ──────────────────────────────────────────────────────
 function DesktopCard({
   review,
+  color,
   config,
   scrollProgress,
   isHovered,
   onHover,
   onHoverEnd,
 }: {
-  review: (typeof REVIEWS)[0];
+  review: Review;
+  color: string;
   config: CardConfig;
   scrollProgress: MotionValue<number>;
   isHovered: boolean;
@@ -157,6 +110,10 @@ function DesktopCard({
   const x      = useTransform(scrollProgress, config.inputRange, [config.startX, config.endX]);
   const y      = useTransform(scrollProgress, config.inputRange, [config.startY, config.endY]);
   const rotate = useTransform(scrollProgress, config.inputRange, [config.startRot, config.endRot]);
+
+  const href = review.experience_slug
+    ? `/experiences/${review.experience_slug}`
+    : "/experiences";
 
   return (
     <motion.div
@@ -174,28 +131,28 @@ function DesktopCard({
       onHoverStart={onHover}
       onHoverEnd={onHoverEnd}
     >
-      <Link href={review.href} className="block cursor-pointer">
+      <Link href={href} className="block cursor-pointer">
         <div className="w-72 bg-white rounded-2xl p-6 border border-slate-200 shadow-2xl hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.28)] transition-shadow duration-300">
           <div className="flex items-center gap-3 mb-4">
             <div className={cn(
               "h-12 w-12 rounded-full bg-linear-to-br flex items-center justify-center shrink-0 shadow-md",
-              review.color
+              color
             )}>
-              <span className="text-white text-sm font-bold">{review.initials}</span>
+              <span className="text-white text-sm font-bold">{getInitials(review.customer_name)}</span>
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-slate-900 text-sm truncate">{review.name}</p>
+              <p className="font-bold text-slate-900 text-sm truncate">{review.customer_name}</p>
               <Stars rating={review.rating} />
             </div>
           </div>
           <p className="text-slate-800 text-sm leading-relaxed mb-5 line-clamp-3 font-medium">
-            &ldquo;{review.text}&rdquo;
+            &ldquo;{review.body}&rdquo;
           </p>
           <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold border-t border-slate-100 pt-4">
             <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-            {review.trip}
+            {review.experience_title}
             <span className="mx-0.5 text-slate-300">•</span>
-            {review.date}
+            {formatDate(review.created_at)}
           </div>
         </div>
       </Link>
@@ -203,33 +160,32 @@ function DesktopCard({
   );
 }
 
-// ── Mobile: card face (shared between stack layers) ────────────────────────────
-function MobileCardFace({ review }: { review: (typeof REVIEWS)[0] }) {
+// ── Mobile: card face ──────────────────────────────────────────────────────────
+function MobileCardFace({ review, color }: { review: Review; color: string }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
-      {/* Colored top strip from the avatar gradient */}
-      <div className={cn("h-1.5 w-full bg-linear-to-r", review.color)} />
+      <div className={cn("h-1.5 w-full bg-linear-to-r", color)} />
       <div className="p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className={cn(
             "h-13 w-13 rounded-full bg-linear-to-br flex items-center justify-center shrink-0 shadow-md",
-            review.color
+            color
           )}>
-            <span className="text-white text-base font-bold">{review.initials}</span>
+            <span className="text-white text-base font-bold">{getInitials(review.customer_name)}</span>
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-slate-900 text-base">{review.name}</p>
+            <p className="font-bold text-slate-900 text-base">{review.customer_name}</p>
             <Stars rating={review.rating} />
           </div>
         </div>
         <p className="text-slate-800 text-[15px] leading-relaxed mb-5 font-medium">
-          &ldquo;{review.text}&rdquo;
+          &ldquo;{review.body}&rdquo;
         </p>
         <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold border-t border-slate-100 pt-4">
           <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-          {review.trip}
+          {review.experience_title}
           <span className="mx-1 text-slate-300">•</span>
-          {review.date}
+          {formatDate(review.created_at)}
         </div>
       </div>
     </div>
@@ -237,13 +193,13 @@ function MobileCardFace({ review }: { review: (typeof REVIEWS)[0] }) {
 }
 
 // ── Mobile: draggable top card ─────────────────────────────────────────────────
-// Remounts (key=topIdx) so x/rotate reset on each new card.
-// Scales up from mid-card position to full size — gives "dealing from deck" feel.
 function SwipeCard({
   review,
+  color,
   onSwipe,
 }: {
-  review: (typeof REVIEWS)[0];
+  review: Review;
+  color: string;
   onSwipe: () => void;
 }) {
   const x      = useMotionValue(0);
@@ -266,11 +222,14 @@ function SwipeCard({
     }
   };
 
+  const href = review.experience_slug
+    ? `/experiences/${review.experience_slug}`
+    : "/experiences";
+
   return (
     <motion.div
       className="absolute w-75 cursor-grab active:cursor-grabbing select-none"
       style={{ x, rotate, touchAction: "pan-y" }}
-      // Animate from mid-card position to full — the "dealt from deck" rise
       initial={{ scale: 0.93, y: 11 }}
       animate={{ scale: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 310, damping: 28 }}
@@ -279,51 +238,47 @@ function SwipeCard({
       dragElastic={0.65}
       onDragEnd={handleDragEnd}
     >
-      <Link href={review.href} className="block">
-        <MobileCardFace review={review} />
+      <Link href={href} className="block">
+        <MobileCardFace review={review} color={color} />
       </Link>
     </motion.div>
   );
 }
 
 // ── Mobile: full swipe stack section ──────────────────────────────────────────
-function MobileSwipeStack() {
-  const total = REVIEWS.length;
+function MobileSwipeStack({ reviews }: { reviews: Review[] }) {
+  const total = reviews.length;
   const [topIdx, setTopIdx] = useState(0);
 
   const advance = () => setTopIdx((p) => (p + 1) % total);
   const goBack  = () => setTopIdx((p) => (p - 1 + total) % total);
-  const card    = (offset: number) => REVIEWS[(topIdx + offset) % total];
+  const card    = (offset: number) => reviews[(topIdx + offset) % total];
+  const color   = (offset: number) => AVATAR_COLORS[(topIdx + offset) % AVATAR_COLORS.length];
 
   return (
     <div className="px-4">
-      {/* Card stack — render back to front */}
       <div className="relative h-115 flex items-center justify-center">
-        {/* Farthest card (bottom of stack) */}
         <motion.div
           animate={{ scale: 0.87, y: 22 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="absolute w-75 pointer-events-none"
         >
-          <MobileCardFace review={card(2)} />
+          <MobileCardFace review={card(2)} color={color(2)} />
         </motion.div>
 
-        {/* Middle card */}
         <motion.div
           animate={{ scale: 0.935, y: 11 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="absolute w-75 pointer-events-none"
         >
-          <MobileCardFace review={card(1)} />
+          <MobileCardFace review={card(1)} color={color(1)} />
         </motion.div>
 
-        {/* Top card — key forces remount + fresh motion values each advance */}
-        <SwipeCard key={topIdx} review={card(0)} onSwipe={advance} />
+        <SwipeCard key={topIdx} review={card(0)} color={color(0)} onSwipe={advance} />
       </div>
 
-      {/* Progress dots */}
       <div className="flex items-center justify-center gap-1.5 mt-6">
-        {REVIEWS.map((_, i) => (
+        {reviews.map((_, i) => (
           <div
             key={i}
             className={cn(
@@ -334,7 +289,6 @@ function MobileSwipeStack() {
         ))}
       </div>
 
-      {/* Prev / Next buttons */}
       <div className="flex items-center justify-center gap-4 mt-5">
         <button
           onClick={goBack}
@@ -364,8 +318,9 @@ function MobileSwipeStack() {
   );
 }
 
-// ── Main export ────────────────────────────────────────────────────────────────
-export function ScrollFanReviews() {
+// ── Inner component — only mounted when reviews are ready ─────────────────────
+// Keeps useScroll's ref always attached to a real DOM element.
+function ScrollFanReviewsInner({ reviews }: { reviews: Review[] }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -373,6 +328,9 @@ export function ScrollFanReviews() {
     target: sectionRef,
     offset: ["start start", "end end"],
   });
+
+  const desktopReviews = reviews.slice(0, 6);
+  const desktopConfigs = CARD_CONFIG.slice(0, desktopReviews.length);
 
   return (
     <>
@@ -385,11 +343,12 @@ export function ScrollFanReviews() {
         <div className="sticky top-0 h-screen flex flex-col overflow-hidden">
           <SectionHeader className="pt-20 pb-6 shrink-0 relative z-30" />
           <div className="flex-1 relative">
-            {REVIEWS.map((review, i) => (
+            {desktopReviews.map((review, i) => (
               <DesktopCard
                 key={review.id}
                 review={review}
-                config={CARD_CONFIG[i]}
+                color={AVATAR_COLORS[i % AVATAR_COLORS.length]}
+                config={desktopConfigs[i]}
                 scrollProgress={scrollYProgress}
                 isHovered={hoveredIndex === i}
                 onHover={() => setHoveredIndex(i)}
@@ -403,8 +362,23 @@ export function ScrollFanReviews() {
       {/* ── Mobile / tablet (<1024px): Tinder-style swipe stack ───────────── */}
       <section className="lg:hidden bg-slate-50 py-16">
         <SectionHeader className="mb-10" />
-        <MobileSwipeStack />
+        <MobileSwipeStack reviews={reviews} />
       </section>
     </>
   );
+}
+
+// ── Main export ────────────────────────────────────────────────────────────────
+export function ScrollFanReviews() {
+  const { data: reviews = [] } = useQuery({
+    queryKey: reviewKeys.featured(),
+    queryFn: getFeaturedReviews,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Wait for enough reviews before mounting the inner component.
+  // This ensures useScroll's ref is always attached to a real DOM node.
+  if (reviews.length < 3) return null;
+
+  return <ScrollFanReviewsInner reviews={reviews} />;
 }
