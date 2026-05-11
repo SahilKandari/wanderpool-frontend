@@ -17,6 +17,13 @@ import type { Experience } from "@/lib/types/experience";
 import type { Category } from "@/lib/types/experience";
 import { cn } from "@/lib/utils";
 
+// ── Hero headline lines ───────────────────────────────────────────────────────
+const HEADLINE: Array<{ text: string; delay: number; gradient?: boolean }> = [
+  { text: "Your Next",  delay: 0.5 },
+  { text: "Adventure", delay: 0.7, gradient: true },
+  { text: "Awaits",    delay: 0.9 },
+];
+
 // ── Hero background images ────────────────────────────────────────────────────
 const HERO_SLIDES = [
   {
@@ -208,7 +215,11 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+
+  // Three-layer depth parallax
+  const bgY   = useTransform(scrollYProgress, [0, 1], ["0%", "35%"]);
+  const midY  = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%",  "8%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   // Auto-advance slides
@@ -233,16 +244,17 @@ export default function HomePage() {
     <div className="bg-white">
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative h-svh min-h-145 max-h-225 overflow-hidden">
-        {/* Slides */}
+
+        {/* ── Layer 1: Background images (moves most on scroll) ── */}
         <AnimatePresence mode="sync">
           <motion.div
             key={slide}
             className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            style={{ y: heroY }}
+            transition={{ duration: 1.4 }}
+            style={{ y: bgY }}
           >
             <Image
               src={HERO_SLIDES[slide].url}
@@ -255,14 +267,61 @@ export default function HomePage() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+        {/* ── Gradient overlays ── */}
+        <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/20 to-black/75 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-r from-black/50 to-transparent pointer-events-none" />
 
-        {/* Slide label — desktop only (would overlap hero text on mobile) */}
+        {/* ── Radial vignette ── */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)" }}
+        />
+
+        {/* ── Film grain ── */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.06] mix-blend-overlay"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C%2Fsvg%3E")`,
+            backgroundRepeat: "repeat",
+            backgroundSize: "200px 200px",
+          }}
+        />
+
+        {/* ── Layer 2: Mountain silhouette (mid-speed parallax) ── */}
+        <motion.div
+          style={{ y: midY }}
+          className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+        >
+          <svg viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice" className="w-full h-full">
+            <path
+              d="M0 400 L0 250 L200 120 L400 220 L600 80 L800 180 L1000 60 L1200 160 L1440 100 L1440 400 Z"
+              fill="rgba(8,80,65,0.35)"
+            />
+            <path
+              d="M0 400 L0 300 L180 200 L360 270 L540 160 L720 240 L900 140 L1080 220 L1260 170 L1440 210 L1440 400 Z"
+              fill="rgba(8,80,65,0.20)"
+            />
+          </svg>
+        </motion.div>
+
+        {/* ── Letterbox bars (cinema reveal on load) ── */}
+        <motion.div
+          initial={{ scaleY: 1 }}
+          animate={{ scaleY: 0 }}
+          transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+          className="absolute top-0 inset-x-0 h-20 bg-black origin-top z-20 pointer-events-none"
+        />
+        <motion.div
+          initial={{ scaleY: 1 }}
+          animate={{ scaleY: 0 }}
+          transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+          className="absolute bottom-0 inset-x-0 h-20 bg-black origin-bottom z-20 pointer-events-none"
+        />
+
+        {/* ── Slide label (desktop) ── */}
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="hidden sm:block absolute top-24 left-6 sm:left-12"
+          className="hidden sm:block absolute top-24 left-6 sm:left-12 z-10"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -282,39 +341,78 @@ export default function HomePage() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Hero content */}
-        <motion.div
-          style={{ opacity: heroOpacity }}
-          className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pt-16 sm:pt-0"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <span className="inline-flex items-center gap-1.5 sm:gap-2 text-amber-400 text-xs sm:text-sm font-semibold tracking-wider sm:tracking-widest uppercase mb-3 sm:mb-4">
-              <span className="h-px w-6 sm:w-8 bg-amber-400 inline-block" />
-              Uttarakhand Adventures
-              <span className="h-px w-6 sm:w-8 bg-amber-400 inline-block" />
-            </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-4 sm:mb-6 max-w-4xl">
-              Your Next
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-                Adventure
-              </span>{" "}
-              Awaits
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-white/75 max-w-xs sm:max-w-md md:max-w-lg mx-auto mb-6 sm:mb-10 leading-relaxed px-2 sm:px-0">
-              Book verified river rafting, treks, camping and more with trusted local guides in Rishikesh & Mussoorie.
-            </p>
-          </motion.div>
+        {/* ── Slide counter (top-right, desktop) ── */}
+        <div className="absolute top-6 right-8 text-white/50 text-xs font-mono tracking-widest hidden sm:block z-10">
+          {String(slide + 1).padStart(2, "0")} / {String(HERO_SLIDES.length).padStart(2, "0")}
+        </div>
 
-          {/* Search bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+        {/* ── Vertical slide nav (desktop, right side) ── */}
+        <div className="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 flex-col items-center gap-3 z-10">
+          {HERO_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setSlide(i)}
+              className={cn(
+                "rounded-full transition-all duration-300",
+                i === slide ? "h-8 w-1.5 bg-white" : "h-1.5 w-1.5 bg-white/30 hover:bg-white/60"
+              )}
+            />
+          ))}
+        </div>
+
+        {/* ── Layer 3: Hero text content (moves least on scroll) ── */}
+        <motion.div
+          style={{ y: textY, opacity: heroOpacity }}
+          className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pt-16 sm:pt-0 z-10"
+        >
+          {/* Eyebrow */}
+          <motion.span
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="inline-flex items-center gap-1.5 sm:gap-2 text-amber-400 text-xs sm:text-sm font-semibold tracking-wider sm:tracking-widest uppercase mb-5 sm:mb-6"
+          >
+            <span className="h-px w-6 sm:w-8 bg-amber-400 inline-block" />
+            Uttarakhand Adventures
+            <span className="h-px w-6 sm:w-8 bg-amber-400 inline-block" />
+          </motion.span>
+
+          {/* Staggered line-by-line headline reveal */}
+          <h1 className="flex flex-col items-center mb-5 sm:mb-7">
+            {HEADLINE.map(({ text, delay, gradient }) => (
+              <div key={text} className="overflow-hidden leading-none">
+                <motion.span
+                  initial={{ y: "105%", opacity: 0 }}
+                  animate={{ y: "0%", opacity: 1 }}
+                  transition={{ duration: 0.85, delay, ease: [0.25, 0.4, 0.25, 1] }}
+                  className={cn(
+                    "block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[1.0] py-0.5",
+                    gradient
+                      ? "text-transparent bg-clip-text bg-linear-to-r from-amber-400 to-orange-400"
+                      : "text-white"
+                  )}
+                >
+                  {text}
+                </motion.span>
+              </div>
+            ))}
+          </h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1.1 }}
+            className="text-sm sm:text-base md:text-lg text-white/75 max-w-xs sm:max-w-md mx-auto mb-7 sm:mb-10 leading-relaxed px-2 sm:px-0"
+          >
+            Book verified river rafting, treks, camping and more with trusted local guides in Rishikesh & Mussoorie.
+          </motion.p>
+
+          {/* Search bar + quick tags */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1.3 }}
             className="w-full max-w-xl"
           >
             <form
@@ -343,7 +441,6 @@ export default function HomePage() {
               </button>
             </form>
 
-            {/* Quick tags */}
             <div className="flex flex-wrap justify-center gap-2 mt-4">
               {["River Rafting", "Trekking", "Camping", "Paragliding"].map(tag => (
                 <Link
@@ -358,23 +455,20 @@ export default function HomePage() {
           </motion.div>
         </motion.div>
 
-        {/* Slide dots */}
-        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
-          {HERO_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setSlide(i)}
-              className={cn(
-                "rounded-full transition-all duration-300",
-                i === slide ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/40 hover:bg-white/60"
-              )}
-            />
-          ))}
+        {/* ── Cinematic progress bar (replaces dot indicators) ── */}
+        <div className="absolute bottom-0 inset-x-0 h-0.5 bg-white/10 z-10">
+          <motion.div
+            key={slide}
+            className="h-full bg-white/60"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 5, ease: "linear" }}
+          />
         </div>
 
-        {/* Scroll indicator — desktop only */}
+        {/* ── Scroll indicator (desktop) ── */}
         <motion.div
-          className="hidden sm:flex absolute bottom-8 right-8 flex-col items-center gap-1 text-white/50"
+          className="hidden sm:flex absolute bottom-8 right-20 flex-col items-center gap-1 text-white/40 z-10"
           animate={{ y: [0, 6, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
