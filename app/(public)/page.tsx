@@ -16,6 +16,7 @@ import { paiseToCurrency } from "@/lib/utils/currency";
 import type { Experience } from "@/lib/types/experience";
 import type { Category } from "@/lib/types/experience";
 import { cn } from "@/lib/utils";
+import { ScrollFanReviews } from "@/components/home/ScrollFanReviews";
 
 // ── Hero headline lines ───────────────────────────────────────────────────────
 const HEADLINE: Array<{ text: string; delay: number; gradient?: boolean }> = [
@@ -614,6 +615,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ── REVIEWS — scroll-driven fan ────────────────────────────────────── */}
+      <ScrollFanReviews />
 
       {/* ── FOR BUSINESSES ────────────────────────────────────────────────── */}
       <section className="py-20 bg-slate-50">
