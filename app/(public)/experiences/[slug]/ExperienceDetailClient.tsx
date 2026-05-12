@@ -125,6 +125,7 @@ export default function ExperienceDetailClient({
 
   // Itinerary accordion — which day is open (null = all closed)
   const [openDay, setOpenDay] = useState<number | null>(null);
+  const [mapLightboxOpen, setMapLightboxOpen] = useState(false);
 
   // Sticky nav active section
   const [activeSection, setActiveSection] = useState<NavSection>("overview");
@@ -536,6 +537,37 @@ export default function ExperienceDetailClient({
                     </span>
                   )}
                 </div>
+
+                {/* ── Route / Itinerary Map ──────────────────────────────── */}
+                {exp.itinerary_map_url && (
+                  <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-6">
+                    <div className="bg-gradient-to-r from-primary/8 to-transparent px-4 py-2.5 flex items-center justify-between border-b border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-[11px] font-bold text-primary uppercase tracking-widest">Route Map</span>
+                      </div>
+                      <button
+                        onClick={() => setMapLightboxOpen(true)}
+                        className="h-7 w-7 rounded-lg bg-slate-100 hover:bg-primary/10 text-slate-400 hover:text-primary flex items-center justify-center transition-colors"
+                        aria-label="View full map"
+                      >
+                        <Expand className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => setMapLightboxOpen(true)}
+                      className="block w-full aspect-video relative cursor-zoom-in"
+                    >
+                      <Image
+                        src={cloudinaryUrl(exp.itinerary_map_url, { width: 1400 }) ?? exp.itinerary_map_url}
+                        alt="Itinerary route map"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 700px"
+                      />
+                    </button>
+                  </div>
+                )}
 
                 {exp.itinerary!.length === 1 ? (
                   /* ── Single-day flat card ─────────────────────────────── */
@@ -1239,6 +1271,43 @@ export default function ExperienceDetailClient({
                 ))}
               </div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Map lightbox */}
+      <AnimatePresence>
+        {mapLightboxOpen && exp?.itinerary_map_url && (
+          <motion.div
+            key="map-lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setMapLightboxOpen(false)}
+          >
+            <button
+              onClick={() => setMapLightboxOpen(false)}
+              className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full h-full max-w-5xl max-h-[90vh] mx-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={cloudinaryUrl(exp.itinerary_map_url, { width: 1920 }) ?? exp.itinerary_map_url}
+                alt="Itinerary route map"
+                fill
+                className="object-contain"
+                sizes="(max-width: 1024px) 100vw, 1024px"
+              />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

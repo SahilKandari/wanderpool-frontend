@@ -55,6 +55,7 @@ export interface ExperiencePayload {
   inclusions: string[];
   exclusions: string[];
   itinerary?: { day: number; title: string; slots?: { time: string; description: string }[]; description?: string }[];
+  itinerary_map_url?: string | null;
   metadata: Record<string, unknown>;
 }
 

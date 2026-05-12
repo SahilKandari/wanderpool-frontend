@@ -38,6 +38,7 @@ export interface Experience {
   inclusions: string[];
   exclusions: string[];
   itinerary?: ItineraryDay[];
+  itinerary_map_url?: string | null;
   min_participants: number;
   max_participants: number;
   duration_minutes: number;

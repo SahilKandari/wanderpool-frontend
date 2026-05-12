@@ -7,7 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Plus, Trash2, Sun, CloudSun, Sunset, Moon, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Plus, Trash2, Sun, CloudSun, Sunset, Moon, Clock, MapPin, Upload, X } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CategoryPicker } from "@/components/experiences/CategoryPicker";
 import { DynamicMetadataForm } from "@/components/experiences/DynamicMetadataForm";
 import { experienceKeys, createExperience } from "@/lib/api/experiences";
+import { apiFetch } from "@/lib/api/client";
 import { categoryKeys, getCategoryFields } from "@/lib/api/categories";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -221,6 +223,36 @@ export default function NewExperiencePage() {
 
   const { fields, append, remove } = useFieldArray({ control, name: "itinerary" });
   const [itineraryMode, setItineraryMode] = useState<"single" | "multi">("single");
+  const [mapUrl, setMapUrl] = useState("");
+  const [mapUploading, setMapUploading] = useState(false);
+
+  async function uploadMapImage(file: File) {
+    const isHeic = /\.(heic|heif)$/i.test(file.name);
+    if (!file.type.startsWith("image/") && !isHeic) { toast.error("Only image files are supported"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10 MB"); return; }
+    setMapUploading(true);
+    try {
+      const signed = await apiFetch<{ cloud_name: string; api_key: string; timestamp: number; signature: string; folder: string; allowed_formats: string; transformation?: string; upload_url: string }>(
+        "/upload/sign?folder_type=experience_image"
+      );
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("api_key", signed.api_key);
+      fd.append("timestamp", String(signed.timestamp));
+      fd.append("signature", signed.signature);
+      fd.append("folder", signed.folder);
+      fd.append("allowed_formats", signed.allowed_formats);
+      if (signed.transformation) fd.append("transformation", signed.transformation);
+      const res = await fetch(signed.upload_url, { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message ?? "Upload failed");
+      setMapUrl(data.secure_url as string);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setMapUploading(false);
+    }
+  }
 
   function switchToSingle() {
     const toRemove = Array.from({ length: fields.length - 1 }, (_, i) => i + 1);
@@ -266,6 +298,7 @@ export default function NewExperiencePage() {
       exclusions: data.exclusions ? data.exclusions.split(",").map(s => s.trim()).filter(Boolean) : [],
       metadata: data.metadata,
       itinerary: data.itinerary,
+      itinerary_map_url: mapUrl || null,
     }),
     onSuccess: (exp) => {
       toast.success("Experience created! Now add your available slots.");
@@ -464,6 +497,47 @@ export default function NewExperiencePage() {
       <p className="text-sm text-muted-foreground">
         Optionally add an itinerary with time-of-day activity slots. Customers see this on your listing page.
       </p>
+
+      {/* Map / route image */}
+      <div className="space-y-2">
+        <Label className="text-xs flex items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 text-primary" />
+          Route / Itinerary Map <span className="text-muted-foreground font-normal">(optional)</span>
+        </Label>
+        {mapUrl ? (
+          <div className="relative rounded-xl overflow-hidden border border-border aspect-video w-full group">
+            <Image src={mapUrl} alt="Itinerary map" fill className="object-cover" unoptimized />
+            <button
+              type="button"
+              onClick={() => setMapUrl("")}
+              className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <label className={cn(
+            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors",
+            mapUploading ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/40 hover:bg-primary/5"
+          )}>
+            {mapUploading ? (
+              <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            ) : (
+              <Upload className="h-6 w-6 text-muted-foreground" />
+            )}
+            <span className="text-xs text-muted-foreground">
+              {mapUploading ? "Uploading…" : "Upload a map or route overview image"}
+            </span>
+            <input
+              type="file"
+              accept="image/*,.heic,.heif"
+              className="sr-only"
+              disabled={mapUploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadMapImage(f); }}
+            />
+          </label>
+        )}
+      </div>
 
       {/* Mode toggle */}
       <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
